@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zyro</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #060912;
+      --surf: #0e1420;
+      --surf2: #161e2c;
+      --bdr: rgba(255, 255, 255, .07);
+      --a: #00e5a0;
+      --a2: #0ea5e9;
+      --a3: #f59e0b;
+      --r: #ef4444;
+      --t: #edf2f7;
+      --m: #5a7080;
+      --sub: #192030;
+      --card: rgba(255, 255, 255, .035)
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--t);
+      font-family: 'DM Sans', sans-serif
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden
+    }
+
+    #shell {
+      width: 390px;
+      height: 100vh;
+      max-height: 820px;
+      background: var(--surf);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative
+    }
+
+    @media(min-width:500px) {
+      #shell {
+        border-radius: 28px;
+        border: 1px solid var(--bdr);
+        box-shadow: 0 40px 80px rgba(0, 0, 0, .7)
+      }
+    }
+
+    /* ── screens ── */
+    .pg {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      overflow-y: auto;
+      overflow-x: hidden
+    }
+
+    .pg::-webkit-scrollbar {
+      width: 3px
+    }
+
+    .pg::-webkit-scrollbar-thumb {
+      background: var(--a)
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes slideR {
+      from {
+        opacity: 0;
+        transform: translateX(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    @keyframes glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 14px rgba(0, 229, 160, .2)
+      }
+
+      50% {
+        box-shadow: 0 0 32px rgba(0, 229, 160, .55)
+      }
+    }
+
+    @keyframes big {
+      from {
+        opacity: 0;
+        transform: scale(.6)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    @keyframes radar {
+      0% {
+        transform: scale(.5);
+        opacity: .8
+      }
+
+      100% {
+        transform: scale(2.6);
+        opacity: 0
+      }
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-5px) rotate(0deg);
+        opacity: 1
+      }
+
+      100% {
+        transform: translateY(180px) rotate(500deg);
+        opacity: 0
+      }
+    }
+
+    @keyframes fillW {
+      from {
+        width: 0
+      }
+
+      to {
+        width: var(--w)
+      }
+    }
+
+    /* ── buttons ── */
+    .btn {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px
+    }
+
+    .bp {
+      background: linear-gradient(135deg, #00e5a0, #00cce0);
+      color: #060912
+    }
+
+    .bp:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 229, 160, .32)
+    }
+
+    .bs {
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      color: var(--t)
+    }
+
+    .bd {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      color: #fff
+    }
+
+    .bo {
+      background: transparent;
+      border: 1.5px solid var(--a);
+      color: var(--a)
+    }
+
+    .bsm {
+      padding: 8px 14px;
+      font-size: 13px;
+      border-radius: 10px;
+      width: auto
+    }
+
+    /* ── tags ── */
+    .tg {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase
+    }
+
+    .tg-g {
+      background: rgba(0, 229, 160, .1);
+      color: var(--a);
+      border: 1px solid rgba(0, 229, 160, .2)
+    }
+
+    .tg-b {
+      background: rgba(14, 165, 233, .1);
+      color: var(--a2);
+      border: 1px solid rgba(14, 165, 233, .2)
+    }
+
+    .tg-y {
+      background: rgba(245, 158, 11, .1);
+      color: var(--a3);
+      border: 1px solid rgba(245, 158, 11, .2)
+    }
+
+    .tg-r {
+      background: rgba(239, 68, 68, .1);
+      color: var(--r);
+      border: 1px solid rgba(239, 68, 68, .2)
+    }
+
+    /* ── cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      border-radius: 15px;
+      padding: 15px
+    }
+
+    .cg {
+      box-shadow: 0 0 26px rgba(0, 229, 160, .1)
+    }
+
+    /* ── form ── */
+    .fl {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--m);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      display: block;
+      margin-bottom: 6px
+    }
+
+    .fi {
+      width: 100%;
+      padding: 13px 14px;
+      background: var(--sub);
+      border: 1.5px solid var(--bdr);
+      border-radius: 11px;
+      color: var(--t);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .fi:focus {
+      border-color: rgba(0, 229, 160, .5)
+    }
+
+    .icon-input {
+      position: relative;
+      margin-bottom: 14px
+    }
+
+    .icon-input svg {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: .4;
+      pointer-events: none
+    }
+
+    .icon-input .fi {
+      padding-left: 42px
+    }
+
+    /* ── progress bar ── */
+    .pb {
+      height: 4px;
+      background: var(--sub);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .pbf {
+      height: 100%;
+      background: linear-gradient(90deg, var(--a), var(--a2));
+      border-radius: 2px;
+      transition: width .4s
+    }
+
+    /* ── stat grid ── */
+    .sg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    .sc {
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      border-radius: 13px;
+      padding: 12px
+    }
+
+    .sv {
+      font-family: 'Space Mono', monospace;
+      font-size: 19px;
+      font-weight: 700;
+      margin-top: 3px
+    }
+
+    .sl {
+      font-size: 11px;
+      color: var(--m);
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    /* ── live dot ── */
+    .ld {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--a);
+      animation: pulse 1.4s infinite;
+      display: inline-block;
+      flex-shrink: 0
+    }
+
+    .ld.r {
+      background: var(--r)
+    }
+
+    /* ── tabs ── */
+    .tabs {
+      display: flex;
+      background: var(--surf2);
+      border-radius: 11px;
+      padding: 4px;
+      margin-bottom: 18px
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--m);
+      transition: all .2s
+    }
+
+    .tab.on {
+      background: var(--a);
+      color: #060912
+    }
+
+    /* ── option tiles ── */
+    .opt {
+      padding: 13px 15px;
+      border-radius: 11px;
+      cursor: pointer;
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      font-size: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .15s;
+      user-select: none
+    }
+
+    .opt:active {
+      transform: scale(.98)
+    }
+
+    .opt.on {
+      background: rgba(0, 229, 160, .09);
+      border-color: rgba(0, 229, 160, .45);
+      color: var(--a);
+      font-weight: 600
+    }
+
+    /* ── step items ── */
+    .si {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 11px;
+      margin-bottom: 8px;
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      transition: all .35s
+    }
+
+    .si.act {
+      border-color: rgba(0, 229, 160, .3);
+      background: rgba(0, 229, 160, .04)
+    }
+
+    .si.done {
+      border-color: rgba(0, 229, 160, .18);
+      opacity: .7
+    }
+
+    .sic {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .sic.pend {
+      background: var(--sub)
+    }
+
+    .sic.act {
+      background: rgba(0, 229, 160, .12);
+      animation: glow 1.5s infinite
+    }
+
+    .sic.done {
+      background: rgba(0, 229, 160, .18)
+    }
+
+    /* ── gate ── */
+    .gate {
+      border-left: 3px solid var(--bdr);
+      padding-left: 15px;
+      margin-bottom: 14px;
+      transition: border-color .35s
+    }
+
+    .gate.act {
+      border-color: var(--a)
+    }
+
+    .gate.done {
+      border-color: rgba(0, 229, 160, .35)
+    }
+
+    /* ── divider ── */
+    .div {
+      height: 1px;
+      background: var(--bdr);
+      margin: 16px 0
+    }
+
+    /* ── ai badge ── */
+    .aib {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      background: linear-gradient(135deg, rgba(0, 229, 160, .08), rgba(14, 165, 233, .08));
+      border: 1px solid rgba(0, 229, 160, .2);
+      border-radius: 18px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--a);
+      letter-spacing: .04em
+    }
+
+    /* ── spinner ── */
+    .spin {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(0, 229, 160, .2);
+      border-top-color: var(--a);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0
+    }
+
+    /* ── header ── */
+    .hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800
+    }
+
+    .logo em {
+      color: var(--a);
+      font-style: normal
+    }
+
+    /* ── section heading ── */
+    .sh {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--m);
+      margin-bottom: 10px
+    }
+
+    /* ── check circle ── */
+    .cc {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: rgba(0, 229, 160, .1);
+      border: 2px solid var(--a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      animation: glow 2s infinite
+    }
+
+    /* ── map box ── */
+    .mb {
+      background: var(--sub);
+      border-radius: 14px;
+      height: 195px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--bdr)
+    }
+
+    /* ── big number ── */
+    .big {
+      font-family: 'Syne', sans-serif;
+      font-size: 60px;
+      font-weight: 800;
+      color: var(--a);
+      line-height: 1;
+      animation: big .45s cubic-bezier(.22, 1, .36, 1) .1s both
+    }
+
+    /* ── toast ── */
+    .toast {
+      position: fixed;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surf2);
+      border: 1px solid var(--a);
+      border-radius: 11px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .5);
+      animation: fadeIn .3s ease
+    }
+
+    /* ── navbar ── */
+    .nb {
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 4px 14px;
+      background: var(--surf2);
+      border-top: 1px solid var(--bdr);
+      flex-shrink: 0
+    }
+
+    .ni {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 10px;
+      transition: all .2s
+    }
+
+    .ni.on {
+      background: rgba(0, 229, 160, .1)
+    }
+
+    .ni svg {
+      opacity: .4
+    }
+
+    .ni.on svg {
+      opacity: 1
+    }
+
+    .ni span {
+      font-size: 10px;
+      color: var(--m);
+      font-weight: 600
+    }
+
+    .ni.on span {
+      color: var(--a)
+    }
+
+    /* ── admin ── */
+    .aw {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+      background: var(--bg)
+    }
+
+    .asb {
+      width: 200px;
+      background: var(--surf);
+      border-right: 1px solid var(--bdr);
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0
+    }
+
+    .asi {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--m);
+      transition: all .2s
+    }
+
+    .asi.on {
+      background: rgba(0, 229, 160, .1);
+      color: var(--a)
+    }
+
+    .atb {
+      background: var(--surf);
+      border-bottom: 1px solid var(--bdr);
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0
+    }
+
+    .am {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px
+    }
+
+    .ag {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 13px;
+      margin-bottom: 20px
+    }
+
+    @media(max-width:900px) {
+      .ag {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .asb {
+        display: none
+      }
+    }
+
+    .ac {
+      background: var(--surf);
+      border: 1px solid var(--bdr);
+      border-radius: 14px;
+      padding: 16px
+    }
+
+    .fr {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      padding: 12px;
+      background: rgba(239, 68, 68, .05);
+      border: 1px solid rgba(239, 68, 68, .13);
+      border-radius: 11px;
+      margin-bottom: 8px
+    }
+
+    /* confetti */
+    .cp {
+      position: absolute;
+      border-radius: 2px;
+      animation: fall linear forwards
+    }
+  </style>
+</head>
+
+<body>
+  <div id="shell"></div>
+
+  <script>
+    // ════════════════════════════════════
+    // SVG ICONS — all inline, no emoji
+    // ════════════════════════════════════
+    const I = {
+      logo: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H12L11 22 19.5 10.5H12Z" fill="var(--a)" stroke="var(--a)" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+      bolt: `<svg width="13" height="13" viewBox="0 0 24 24" fill="var(--a)"><path d="M13 2 4.5 13.5H12L11 22 19.5 10.5H12Z"/></svg>`,
+      shield: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7Z"/></svg>`,
+      shieldG: `<svg width="19" height="19" viewBox="0 0 24 24" fill="var(--a)" stroke="none"><path d="M12 2 3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7Z"/></svg>`,
+      check: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      checkW: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      checkC: `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`,
+      phone: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>`,
+      lock: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+      mail: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+      send: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+      arrow: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+      home: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+      user: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`,
+      radio: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 7.76a6 6 0 0 0 0 8.49"/><path d="M20.66 3.34a12 12 0 0 1 0 17.32M3.34 3.34a12 12 0 0 0 0 17.32"/></svg>`,
+      bar: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+      map: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`,
+      alert: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      alertBig: `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      rain: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--a2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>`,
+      traffic: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--a3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="1" width="14" height="22" rx="4"/><circle cx="12" cy="7" r="2" fill="var(--r)" stroke="none"/><circle cx="12" cy="13" r="2" fill="var(--a3)" stroke="none"/><circle cx="12" cy="19" r="2" fill="var(--a)" stroke="none"/></svg>`,
+      down: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`,
+      clock: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+      cpu: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`,
+      cpuBig: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`,
+      money: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+      search: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+      eye: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+      people: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-1a6 6 0 0 1 6-6"/><circle cx="17" cy="9" r="2"/><path d="M15 21v-1a4 4 0 0 1 4-4"/></svg>`,
+      logout: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+      gear: `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+      wave: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s2-4 5-4 5 8 10 8 5-4 5-4"/><path d="M2 20s2-4 5-4 5 8 10 8 5-4 5-4"/></svg>`,
+      waveBig: `<svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s2-4 5-4 5 8 10 8 5-4 5-4"/><path d="M2 20s2-4 5-4 5 8 10 8 5-4 5-4"/></svg>`,
+      zap: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--a3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+      upi: `<svg width="44" height="44" viewBox="0 0 44 44"><rect width="44" height="44" rx="10" fill="rgba(14,165,233,.12)"/><path d="M22 9 L13 22 L22 22 L20 35 L31 22 L22 22 Z" fill="var(--a2)"/><text x="6" y="41" font-size="8" fill="var(--a2)" font-family="DM Sans,sans-serif" font-weight="700">UPI</text></svg>`,
+      upiLg: `<svg width="68" height="68" viewBox="0 0 68 68"><rect width="68" height="68" rx="15" fill="rgba(14,165,233,.1)"/><path d="M34 14 L20 34 L34 34 L31 54 L48 34 L34 34 Z" fill="var(--a2)"/><text x="9" y="63" font-size="12" fill="var(--a2)" font-family="DM Sans,sans-serif" font-weight="700">UPI</text></svg>`,
+      star: `<svg width="13" height="13" viewBox="0 0 24 24" fill="var(--a3)" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      party: `<svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="25" fill="rgba(0,229,160,.08)" stroke="rgba(0,229,160,.18)" stroke-width="1.5"/><path d="M15 39 L21 17 L39 33 Z" fill="rgba(245,158,11,.55)" stroke="var(--a3)" stroke-width=".8"/><circle cx="35" cy="15" r="4" fill="rgba(0,229,160,.45)" stroke="var(--a)" stroke-width="1.2"/><circle cx="17" cy="21" r="3" fill="rgba(14,165,233,.45)" stroke="var(--a2)" stroke-width="1"/><path d="M30 37 Q34 31 38 37" stroke="var(--r)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`,
+    };
+
+    // ════════════════════════════════════
+    // STATE
+    // ════════════════════════════════════
+    const S = {
+      screen: 'login',
+      loginMode: 'worker',   // 'worker' | 'admin'
+      loginStep: 1,          // 1=phone 2=otp
+      loginErr: '',
+      qStep: 0,
+      qAnswers: { platform: 'Swiggy', hours: '6–8 hrs', zone: 'Koramangala, Bengaluru', vehicle: 'Two-Wheeler', experience: '2–3 years', income: '₹18,000–₹25,000/mo' },
+      planLoading: true, planPct: 0, planStepIdx: 0,
+      payStep: 0,
+      monTick: 0, monBad: false,
+      triStep: 0,
+      claimStep: 0,
+      adminTab: 'overview',
+      adminTick: 0,
+      crisis: false, crisisN: 0,
+      _ivs: [], _tos: []
+    };
+
+    function addIV(fn, ms) { const t = setInterval(fn, ms); S._ivs.push(t); return t; }
+    function addTO(fn, ms) { const t = setTimeout(fn, ms); S._tos.push(t); return t; }
+    function clearAll() { S._ivs.forEach(clearInterval); S._tos.forEach(clearTimeout); S._ivs = []; S._tos = []; }
+
+    // ════════════════════════════════════
+    // HELPERS
+    // ════════════════════════════════════
+    function go(s) { clearAll(); S.screen = s; draw(); boot(s); }
+
+    function boot(s) {
+      if (s === 'plan') {
+        S.planLoading = true; S.planPct = 0; S.planStepIdx = 0;
+        let i = 0;
+        addIV(() => { i++; S.planPct = Math.min(i * 21, 100); S.planStepIdx = Math.min(Math.floor(i / 1.2), 4); if (i >= 6) { S.planLoading = false; } draw(); }, 560);
+      }
+      if (s === 'activation') S.payStep = 0;
+      if (s === 'monitoring') {
+        S.monTick = 0; S.monBad = false;
+        addIV(() => { S.monTick++; if (S.monTick % 2 === 0) draw(); }, 1000);
+        addTO(() => { S.monBad = true; draw(); addTO(() => go('trigger'), 1800); }, 4200);
+      }
+      if (s === 'trigger') {
+        S.triStep = 0;
+        [1, 2, 3, 4].forEach(n => addTO(() => { S.triStep = n; draw(); }, n * 1200));
+        addTO(() => go('claim'), 5600);
+      }
+      if (s === 'claim') {
+        S.claimStep = 0;
+        [1, 2, 3, 4].forEach(n => addTO(() => { S.claimStep = n; draw(); }, n * 1050));
+        addTO(() => go('payout'), 5400);
+      }
+      if (s === 'payout') addTO(() => toast('💸 ₹403 credited · arjun.kumar@okicici'), 1200);
+      if (s === 'admin') { S.adminTick = 0; addIV(() => { S.adminTick++; if (S.adminTick % 3 === 0) draw(); }, 1000); }
+    }
+
+    let _toastTimer = null;
+    function toast(msg) {
+      let el = document.getElementById('_toast');
+      if (!el) { el = document.createElement('div'); el.id = '_toast'; document.body.appendChild(el); }
+      el.innerHTML = `<div class="toast">${msg}</div>`;
+      if (_toastTimer) clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { el.innerHTML = ''; }, 3000);
+    }
+
+    // ════════════════════════════════════
+    // DOM BUILDER — safe, no string hacks
+    // ════════════════════════════════════
+    function el(tag, attrs, ...kids) {
+      const e = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (k === 'class') e.className = v;
+        else if (k === 'style') e.style.cssText = v;
+        else if (k === 'html') e.innerHTML = v;
+        else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v);
+      }
+      for (const k of kids) {
+        if (k == null) continue;
+        if (typeof k === 'string') e.insertAdjacentHTML('beforeend', k);
+        else e.appendChild(k);
+      }
+      return e;
+    }
+    function div(cls, style, ...kids) { return el('div', { class: cls, style: style || '' }, ...kids); }
+    function h(html) { const d = document.createElement('div'); d.innerHTML = html; return d; }
+    function svgEl(svgStr) { const d = document.createElement('div'); d.innerHTML = svgStr; return d.firstChild; }
+
+    // ════════════════════════════════════
+    // SCREENS
+    // ════════════════════════════════════
+
+    // ── LOGIN ──
+    function pgLogin() {
+      const isW = S.loginMode === 'worker';
+      const pg = div('pg', 'background:var(--surf);justify-content:center;');
+
+      // glow bg
+      pg.insertAdjacentHTML('beforeend', `<div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(0,229,160,.06),transparent 70%);pointer-events:none;"></div>`);
+
+      // logo block
+      const logoBlk = div('', 'text-align:center;margin-bottom:32px;');
+      const logoRow = div('', 'display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:7px;');
+      logoRow.appendChild(svgEl(I.logo));
+      logoRow.insertAdjacentHTML('beforeend', `<span class="logo">zy<em>ro</em></span>`);
+      logoBlk.appendChild(logoRow);
+      logoBlk.insertAdjacentHTML('beforeend',
+        `<div style="color:var(--m);font-size:14px;margin-bottom:12px;">
+    AI-Powered Income Protection
+  </div>
+  <span class="aib">${I.bolt} APRE-XAI Engine Active</span>
+
+  <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.5);max-width:260px;margin-left:auto;margin-right:auto;line-height:1.4;">
+    This is a guided demo with simulated data to showcase system capabilities.
+  </div>`
+      );
+      pg.appendChild(logoBlk);
+
+      // tabs
+      const tabs = div('tabs', '');
+      const tw = div(`tab ${isW ? 'on' : ''}`, 'cursor:pointer;', 'Rider Login');
+      const ta = div(`tab ${!isW ? 'on' : ''}`, 'cursor:pointer;', 'Admin');
+      tw.addEventListener('click', () => { S.loginMode = 'worker'; S.loginStep = 1; S.loginErr = ''; draw(); });
+      ta.addEventListener('click', () => { S.loginMode = 'admin'; S.loginErr = ''; draw(); });
+      tabs.appendChild(tw); tabs.appendChild(ta);
+      pg.appendChild(tabs);
+
+      // form
+      pg.appendChild(isW ? formWorker() : formAdmin());
+      return pg;
+    }
+
+    function formWorker() {
+      const wrap = document.createDocumentFragment();
+      if (S.loginStep === 1) {
+        // phone input
+        const row = div('icon-input', '');
+        row.appendChild(svgEl(I.phone));
+        const inp = el('input', { class: 'fi', id: 'inp-ph', placeholder: '10-digit mobile', value: '9999999999' });
+        row.appendChild(inp);
+        wrap.appendChild(row);
+
+        if (S.loginErr) {
+          const err = div('', 'color:var(--r);font-size:13px;margin-bottom:10px;'); err.textContent = S.loginErr; wrap.appendChild(err);
+        }
+        const btn = el('button', {
+          class: 'btn bp', onclick: () => {
+            const v = document.getElementById('inp-ph')?.value || '';
+            if (v !== '9999999999') { S.loginErr = 'Use demo: 9999999999'; draw(); return; }
+            S.loginErr = ''; S.loginStep = 2; draw();
+          }
+        }, I.send, ' Send OTP');
+        wrap.appendChild(btn);
+        wrap.appendChild(div('div', ''));
+        const auto = el('button', { class: 'btn bs', style: 'font-size:13px;padding:12px;margin-top:0;', onclick: () => { S.role = 'worker'; go('onboarding'); } }, I.bolt, ' Auto-Login (Demo Speed)');
+        wrap.appendChild(auto);
+      } else {
+        // otp hint
+        const hint = div('', 'background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.18);border-radius:11px;padding:11px 14px;margin-bottom:14px;font-size:13px;');
+        hint.innerHTML = `OTP sent to +91 9999999999 &nbsp;·&nbsp; <span style="color:var(--a);font-weight:600;">Demo: 123456</span>`;
+        wrap.appendChild(hint);
+        // otp input
+        const row = div('icon-input', '');
+        row.appendChild(svgEl(I.lock));
+        const inp = el('input', { class: 'fi', id: 'inp-otp', placeholder: '6-digit OTP', maxlength: '6', value: '123456' });
+        row.appendChild(inp);
+        wrap.appendChild(row);
+
+        if (S.loginErr) {
+          const err = div('', 'color:var(--r);font-size:13px;margin-bottom:10px;'); err.textContent = S.loginErr; wrap.appendChild(err);
+        }
+        const btn = el('button', {
+          class: 'btn bp', onclick: () => {
+            const v = document.getElementById('inp-otp')?.value || '';
+            if (v !== '123456') { S.loginErr = 'OTP is 123456'; draw(); return; }
+            S.role = 'worker'; go('onboarding');
+          }
+        }, I.checkC.slice(0, I.checkC.indexOf(' width')), ' Verify & Login');
+        wrap.appendChild(btn);
+        wrap.appendChild(div('div', ''));
+        const auto = el('button', { class: 'btn bs', style: 'font-size:13px;padding:12px;', onclick: () => { S.role = 'worker'; go('onboarding'); } }, I.bolt, ' Auto-Login');
+        wrap.appendChild(auto);
+      }
+      return wrap;
+    }
+
+    function formAdmin() {
+      const wrap = document.createDocumentFragment();
+      const re = div('icon-input', '');
+      re.appendChild(svgEl(I.mail));
+      const ei = el('input', { class: 'fi', id: 'inp-em', placeholder: 'admin@zyro.ai', value: 'admin@zyro.ai' });
+      re.appendChild(ei);
+      wrap.appendChild(re);
+
+      const rp = div('icon-input', '');
+      rp.appendChild(svgEl(I.lock));
+      const pi = el('input', { class: 'fi', id: 'inp-pw', type: 'password', placeholder: '••••••••', value: 'admin123' });
+      rp.appendChild(pi);
+      wrap.appendChild(rp);
+
+      if (S.loginErr) {
+        const err = div('', 'color:var(--r);font-size:13px;margin-bottom:10px;'); err.textContent = S.loginErr; wrap.appendChild(err);
+      }
+      const btn = el('button', {
+        class: 'btn bp', onclick: () => {
+          const e = document.getElementById('inp-em')?.value || '';
+          const p = document.getElementById('inp-pw')?.value || '';
+          if (e !== 'admin@zyro.ai' || p !== 'admin123') { S.loginErr = 'admin@zyro.ai / admin123'; draw(); return; }
+          S.role = 'admin'; go('admin');
+        }
+      }, I.arrow, ' Login to Admin');
+      wrap.appendChild(btn);
+      wrap.appendChild(div('div', ''));
+      const auto = el('button', { class: 'btn bs', style: 'font-size:13px;padding:12px;', onclick: () => { S.role = 'admin'; go('admin'); } }, I.bolt, ' Auto-Login Admin');
+      wrap.appendChild(auto);
+      return wrap;
+    }
+
+    // ── ONBOARDING ──
+    const QS = [
+      { k: 'platform', q: 'Which platform do you work on?', opts: ['Swiggy', 'Zomato', 'Blinkit', 'Multiple Platforms'] },
+      { k: 'hours', q: 'Average daily working hours?', opts: ['< 4 hrs', '4–6 hrs', '6–8 hrs', '8+ hrs'] },
+      { k: 'zone', q: 'Primary delivery zone?', opts: ['Koramangala, Bengaluru', 'Andheri, Mumbai', 'Cyber City, Gurugram', 'T. Nagar, Chennai'] },
+      { k: 'vehicle', q: 'Vehicle type?', opts: ['Two-Wheeler', 'Electric Scooter', 'Cycle', 'Three-Wheeler'] },
+      { k: 'experience', q: 'Delivery experience?', opts: ['< 6 months', '6–12 months', '1–2 years', '2–3 years', '3+ years'] },
+      { k: 'income', q: 'Average monthly income?', opts: ['< ₹12,000', '₹12,000–₹18,000', '₹18,000–₹25,000', '> ₹25,000'] },
+    ];
+
+    function pgOnboarding() {
+      const qi = S.qStep;
+      const q = QS[qi];
+      const pct = Math.round(qi / QS.length * 100);
+
+      const pg = div('pg', '');
+
+      // header
+      const hdr = div('hdr', '');
+      hdr.insertAdjacentHTML('beforeend', `<div class="logo" style="font-size:20px;">zy<em>ro</em></div>`);
+      hdr.insertAdjacentHTML('beforeend', `<span class="tg tg-b">${qi + 1} / ${QS.length}</span>`);
+      pg.appendChild(hdr);
+
+      // progress
+      const pb = div('', 'margin-bottom:20px;');
+      pb.insertAdjacentHTML('beforeend', `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--m);margin-bottom:6px;"><span>Building your risk profile</span><span>${pct}%</span></div>`);
+      pb.insertAdjacentHTML('beforeend', `<div class="pb"><div class="pbf" style="width:${pct}%"></div></div>`);
+      pg.appendChild(pb);
+
+      // question
+      const qEl = div('', 'font-size:18px;font-weight:700;margin-bottom:18px;line-height:1.4;font-family:Syne,sans-serif;');
+      qEl.textContent = q.q;
+      pg.appendChild(qEl);
+
+      // options — built with DOM, zero string interpolation of values
+      const opts = div('', 'flex:1;');
+      q.opts.forEach((optVal, oi) => {
+        const tile = div(`opt ${S.qAnswers[q.k] === optVal ? 'on' : ''}`, '');
+        // check icon placeholder
+        const ckSpan = document.createElement('span');
+        ckSpan.innerHTML = S.qAnswers[q.k] === optVal ? I.check : '';
+        tile.appendChild(ckSpan);
+        tile.appendChild(document.createTextNode(optVal));
+
+        tile.addEventListener('click', () => {
+          // update state
+          S.qAnswers[q.k] = optVal;
+          // update all tiles in place — no re-render, no flicker
+          const allTiles = opts.querySelectorAll('.opt');
+          allTiles.forEach((t, i) => {
+            const isNow = (i === oi);
+            t.classList.toggle('on', isNow);
+            t.querySelector('span').innerHTML = isNow ? I.check : '';
+          });
+        });
+        opts.appendChild(tile);
+      });
+      pg.appendChild(opts);
+
+      // nav buttons
+      const nav = div('', 'margin-top:auto;padding-top:14px;');
+      if (qi < QS.length - 1) {
+        const nxt = el('button', { class: 'btn bp', onclick: () => { S.qStep++; draw(); } }, I.arrow, ' Next');
+        nav.appendChild(nxt);
+      } else {
+        const done = el('button', { class: 'btn bp', onclick: () => go('plan') }, I.cpu, ' Get My AI Plan');
+        nav.appendChild(done);
+      }
+      if (qi > 0) {
+        const bk = el('button', { class: 'btn bs', style: 'margin-top:9px;padding:12px;font-size:14px;', onclick: () => { S.qStep--; draw(); } }, '← Back');
+        nav.appendChild(bk);
+      }
+      pg.appendChild(nav);
+      return pg;
+    }
+
+    // ── AI PLAN ──
+    const PSTEPS = ['Analysing work pattern…', 'Fetching zone risk data…', 'Running APRE-XAI model…', 'Calibrating parametric triggers…', 'Generating personalised plan…'];
+    function pgPlan() {
+      if (S.planLoading) {
+        const pg = div('pg', 'justify-content:center;align-items:center;text-align:center;');
+        pg.appendChild(svgEl(I.cpuBig));
+        pg.insertAdjacentHTML('beforeend', `<div style="font-family:Syne,sans-serif;font-weight:700;font-size:22px;margin:18px 0 5px;">AI Risk Engine</div><div style="color:var(--m);font-size:12px;margin-bottom:20px;">APRE-XAI v3.2</div><div class="pb" style="width:250px;margin:0 auto 13px;"><div class="pbf" style="width:${S.planPct}%"></div></div><div style="font-size:12px;color:var(--m);font-family:'Space Mono',monospace;">${PSTEPS[S.planStepIdx]}</div><div style="margin-top:18px;"><span class="aib">${I.bolt} Confidence: High</span></div>`);
+        return pg;
+      }
+
+      const pg = div('pg', '');
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="hdr"><div class="logo" style="font-size:20px;">zy<em>ro</em></div><span class="tg tg-g">${I.check} Plan Ready</span></div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-family:Syne,sans-serif;font-weight:800;font-size:23px;margin-bottom:7px;">Your AI-Crafted Plan</div>
+      <span class="aib">${I.bolt} Powered by APRE-XAI</span>
+    </div>
+    <div class="card cg" style="margin-bottom:13px;background:linear-gradient(135deg,rgba(0,229,160,.05),rgba(14,165,233,.04));">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;">
+        <div><div style="font-size:11px;color:var(--m);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Plan</div><div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;">Standard Plan</div></div>
+        <span class="tg tg-g">${I.check} Active</span>
+      </div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Weekly Premium</div><div class="sv" style="color:var(--a3);">₹63</div></div>
+        <div class="sc"><div class="sl">Hourly Benefit</div><div class="sv" style="color:var(--a);">₹120</div></div>
+        <div class="sc"><div class="sl">Weekly Cap</div><div class="sv" style="color:var(--a2);">₹600</div></div>
+        <div class="sc"><div class="sl">Coverage</div><div style="font-weight:700;font-size:12px;margin-top:4px;">Rain+Traffic+Drop</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;font-size:13px;line-height:1.75;color:rgba(237,242,247,.8);">
+      <div style="font-weight:700;margin-bottom:7px;font-size:14px;color:var(--t);display:flex;align-items:center;gap:6px;">${I.cpu} Why this plan?</div>
+      Koramangala is a <strong>Zone-B high-disruption area</strong> with 38% more weather events than average. Your 6–8hr shift maximises payout potential. APRE-XAI calibrated ₹120/hr using <strong>platform earnings data</strong> and local order density.
+      <div style="margin-top:11px;display:flex;gap:7px;flex-wrap:wrap;"><span class="tg tg-b">Trust: 82</span><span class="tg tg-g">Fraud: Low</span><span class="tg tg-y">Zone: B+</span></div>
+    </div>`);
+      const btn = el('button', { class: 'btn bp', style: 'margin-top:auto;', onclick: () => go('activation') }, I.shieldG, ' Activate Plan · ₹63/week');
+      pg.appendChild(btn);
+      return pg;
+    }
+
+    // ── ACTIVATION ──
+    function pgActivation() {
+      if (S.payStep === 0) {
+        const pg = div('pg', '');
+        pg.insertAdjacentHTML('beforeend', `
+      <div class="hdr"><div class="logo" style="font-size:20px;">zy<em>ro</em></div></div>
+      <div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;margin-bottom:4px;">Activate Policy</div>
+      <div style="color:var(--m);font-size:14px;margin-bottom:20px;">Secure payment via UPI</div>
+      <div class="card" style="margin-bottom:13px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;"><span style="color:var(--m);">Plan</span><span style="font-weight:600;">Standard Plan</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;"><span style="color:var(--m);">Duration</span><span style="font-weight:600;">1 Week</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;"><span style="color:var(--m);">Coverage</span><span style="font-weight:600;">Rain + Traffic + Drop</span></div>
+        <div class="div" style="margin:10px 0;"></div>
+        <div style="display:flex;justify-content:space-between;font-size:19px;font-weight:700;"><span>Total</span><span style="color:var(--a);">₹63</span></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;display:flex;align-items:center;gap:13px;">
+        ${I.upi}
+        <div><div style="font-weight:600;font-size:14px;">UPI Payment</div><div style="color:var(--m);font-size:12px;">arjun.kumar@okicici</div></div>
+        <div style="margin-left:auto;"><span class="tg tg-g">${I.check} Default</span></div>
+      </div>`);
+        const btn = el('button', {
+          class: 'btn bp', style: 'margin-top:auto;', onclick: () => {
+            S.payStep = 1; draw();
+            addTO(() => { S.payStep = 2; draw(); }, 2400);
+          }
+        }, I.send, ' Pay ₹63 via UPI');
+        pg.appendChild(btn);
+        return pg;
+      }
+
+      if (S.payStep === 1) {
+        const pg = div('pg', 'justify-content:center;align-items:center;text-align:center;');
+        pg.insertAdjacentHTML('beforeend', `
+      <div style="animation:pulse 1s infinite;">${I.upiLg}</div>
+      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:20px;margin:18px 0 7px;">Processing Payment</div>
+      <div style="color:var(--m);font-size:14px;margin-bottom:20px;">Connecting to UPI gateway…</div>
+      <div class="pb" style="width:230px;margin:0 auto;"><div class="pbf" style="width:100%;transition:none;"></div></div>
+      <div style="margin-top:11px;font-family:'Space Mono',monospace;font-size:11px;color:var(--m);">Txn: ZY-PAY-9918273</div>`);
+        return pg;
+      }
+
+      // step 2 = success
+      const pg = div('pg', 'justify-content:center;align-items:center;position:relative;overflow:hidden;');
+      addConfetti(pg);
+      const inner = div('', 'text-align:center;z-index:1;position:relative;');
+      inner.insertAdjacentHTML('beforeend', `
+    <div class="cc">${I.checkC}</div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:26px;margin-bottom:7px;">Policy Activated!</div>
+    <div style="color:var(--m);font-size:14px;margin-bottom:20px;">Your income is now protected</div>
+    <div class="card" style="text-align:left;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px;"><span style="color:var(--m);">Policy ID</span><span style="font-family:'Space Mono',monospace;font-size:11px;">ZY-20260320-KRM</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px;"><span style="color:var(--m);">Valid Until</span><span style="font-size:13px;">27 Mar 2026</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--m);">UPI Ref</span><span style="font-family:'Space Mono',monospace;font-size:11px;">4291837465</span></div>
+    </div>`);
+      const btn = el('button', { class: 'btn bp', onclick: () => go('monitoring') }, I.radio, ' Go to Live Monitoring');
+      inner.appendChild(btn);
+      pg.appendChild(inner);
+      return pg;
+    }
+
+    // ── MONITORING ──
+    function pgMonitoring() {
+      const t = S.monTick, d = S.monBad;
+      const rain = d ? 34 : [12, 15, 18, 16][t % 4];
+      const traf = d ? 'Critical' : ['Moderate', 'High', 'Moderate'][t % 3];
+      const drop = d ? 71 : [30, 42, 52, 38][t % 4];
+      const mm = String(Math.floor(t / 60)).padStart(2, '0'), ss = String(t % 60).padStart(2, '0');
+
+      const pg = div('pg', '');
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="hdr">
+      <div class="logo" style="font-size:20px;">zy<em>ro</em></div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;"><div class="ld"></div>LIVE</div>
+    </div>
+    <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(14,165,233,.06),rgba(0,229,160,.03));">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><div class="ld"></div><span style="font-size:13px;font-weight:600;">Monitoring your zone</span></div>
+      <div style="font-size:12px;color:var(--m);">Koramangala, Zone B · Arjun Kumar</div>
+    </div>
+    <div class="mb" style="margin-bottom:12px;">
+      <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:.12;">
+        ${[40, 80, 130, 170].map(y => `<line x1="0" y1="${y}" x2="100%" y2="${y}" stroke="var(--a)" stroke-width=".5"/>`).join('')}
+        ${[65, 130, 200, 265].map(x => `<line x1="${x}" y1="0" x2="${x}" y2="100%" stroke="var(--a)" stroke-width=".5"/>`).join('')}
+      </svg>
+      ${d ? `<div style="position:absolute;top:38%;left:44%;width:60px;height:60px;border-radius:50%;border:2px solid rgba(239,68,68,.5);transform-origin:center;animation:radar 1.2s infinite;"></div>
+           <div style="position:absolute;top:38%;left:44%;width:60px;height:60px;border-radius:50%;border:1px solid rgba(239,68,68,.3);transform-origin:center;animation:radar 1.2s .5s infinite;"></div>`: ''}
+      <div style="position:absolute;top:42%;left:48%;width:12px;height:12px;border-radius:50%;background:${d ? 'var(--r)' : 'var(--a)'};box-shadow:0 0 13px ${d ? 'rgba(239,68,68,.9)' : 'rgba(0,229,160,.9)'};transform:translate(-50%,-50%);"></div>
+      <div style="position:absolute;bottom:9px;left:11px;font-size:10px;color:var(--m);font-family:'Space Mono',monospace;">Zone B · Bengaluru South</div>
+      <div style="position:absolute;bottom:9px;right:9px;"><span class="tg ${d ? 'tg-r' : 'tg-g'}">${d ? `${I.alert} DISRUPTION` : `${I.check} CLEAR`}</span></div>
+    </div>
+    <div class="sh">Live Feed</div>
+    <div class="sg" style="margin-bottom:12px;">
+      <div class="sc" style="${d ? 'border-color:rgba(239,68,68,.3);' : ''}"><div class="sl" style="display:flex;align-items:center;gap:4px;">${I.rain} Rainfall</div><div class="sv" style="color:${d ? 'var(--r)' : 'var(--a2)'};">${rain} mm/hr</div></div>
+      <div class="sc" style="${d ? 'border-color:rgba(239,68,68,.3);' : ''}"><div class="sl" style="display:flex;align-items:center;gap:4px;">${I.traffic} Traffic</div><div class="sv" style="color:${d ? 'var(--r)' : 'var(--a3)'};font-size:15px;">${traf}</div></div>
+      <div class="sc" style="${d ? 'border-color:rgba(239,68,68,.3);' : ''}"><div class="sl" style="display:flex;align-items:center;gap:4px;">${I.down} Order Drop</div><div class="sv" style="color:${d ? 'var(--r)' : 'var(--t)'};">${drop}%</div></div>
+      <div class="sc"><div class="sl" style="display:flex;align-items:center;gap:4px;">${I.clock} Active</div><div class="sv" style="font-size:15px;">${mm}:${ss}</div></div>
+    </div>
+    ${d ? `<div style="background:rgba(239,68,68,.07);border:1.5px solid rgba(239,68,68,.26);border-radius:13px;padding:13px 15px;animation:fadeIn .4s ease;">
+      <div style="display:flex;align-items:center;gap:7px;font-weight:700;color:var(--r);margin-bottom:4px;"><div class="ld r"></div>${I.alert} Disruption Detected</div>
+      <div style="font-size:13px;color:rgba(237,242,247,.7);">Heavy rainfall exceeds threshold. Initiating Tri-Gate validation…</div>
+    </div>`: ''}
+  `);
+      return pg;
+    }
+
+    // ── TRI-GATE ──
+    const GATES = [
+      { ic: I.rain, label: 'Heavy Rain Detected', sub: 'Rainfall: 34 mm/hr · Threshold: 20 mm/hr exceeded', note: 'IMD + AccuWeather cross-validated' },
+      { ic: I.bar, label: 'Validating Economic Impact', sub: 'Order drop: 71% · Normal: 18% · Delta: 53%', note: 'Platform data API confirmed' },
+      { ic: I.clock, label: 'Confirming Persistence', sub: 'Duration: 2.8 hrs continuous · Threshold: 1.5 hrs', note: 'Temporal gate passed' },
+      { ic: I.checkC, label: 'Event Finalised', sub: 'All 3 Tri-Gates passed · Payout triggered', note: 'Policy ZY-20260320-KRM activated' },
+    ];
+    function pgTrigger() {
+      const pg = div('pg', '');
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="hdr"><div class="logo" style="font-size:20px;">zy<em>ro</em></div><span class="tg tg-r"><div class="ld r" style="width:6px;height:6px;"></div> TRIGGER</span></div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;margin-bottom:4px;">Tri-Gate Validation</div>
+    <div style="color:var(--m);font-size:13px;margin-bottom:22px;">AI verifying across 3 independent data sources</div>`);
+
+      GATES.forEach((g, i) => {
+        const st = S.triStep > i ? 'done' : S.triStep === i ? 'act' : 'pend';
+        const gEl = div(`gate ${st}`, `opacity:${S.triStep >= i ? 1 : .3};transition:all .4s;`);
+        gEl.insertAdjacentHTML('beforeend', `
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:3px;">
+        ${g.ic} <span>${g.label}</span>
+        ${st === 'done' ? `<span style="margin-left:auto;">${I.check}</span>` : ''}
+        ${st === 'act' ? `<div class="spin" style="margin-left:auto;"></div>` : ''}
+      </div>
+      <div style="font-size:12px;color:var(--m);">${g.sub}</div>
+      ${st !== 'pend' ? `<div style="font-size:11px;color:var(--a);margin-top:3px;">${I.bolt} ${g.note}</div>` : ''}`);
+        pg.appendChild(gEl);
+      });
+
+      if (S.triStep >= 4) {
+        const done = div('card', 'background:rgba(0,229,160,.06);border:1.5px solid rgba(0,229,160,.26);text-align:center;padding:18px;margin-top:12px;animation:fadeIn .5s ease;');
+        done.insertAdjacentHTML('beforeend', `${I.shieldG}<div style="font-weight:700;font-size:16px;margin:7px 0 3px;">All Gates Passed</div><div style="font-size:13px;color:var(--m);">Processing automatic payout…</div>`);
+        pg.appendChild(done);
+      }
+      return pg;
+    }
+
+    // ── CLAIM ──
+    const CSTEPS = [
+      { ic: I.search, label: 'Checking your activity', sub: 'Verifying you were active during the event' },
+      { ic: I.shieldG, label: 'Validating eligibility', sub: 'Policy active · Trust score: 82 · No prior claims' },
+      { ic: I.cpu, label: 'Calculating payout', sub: '₹120/hr × 2.8 hrs → smart-capped at ₹403' },
+      { ic: I.money, label: 'Payout confirmed', sub: '₹403 approved · UPI transfer initiated' },
+    ];
+    function pgClaim() {
+      const pg = div('pg', '');
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="hdr"><div class="logo" style="font-size:20px;">zy<em>ro</em></div><span class="aib">${I.bolt} Auto Processing</span></div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;margin-bottom:4px;">Claim Processing</div>
+    <div style="color:var(--m);font-size:13px;margin-bottom:20px;">Fully automated · No action required</div>`);
+
+      CSTEPS.forEach((s, i) => {
+        const done = S.claimStep > i, act = S.claimStep === i;
+        const row = div(`si ${done ? 'done' : act ? 'act' : ''}`, '');
+        const ic = div(`sic ${done ? 'done' : act ? 'act' : 'pend'}`, '');
+        ic.innerHTML = done ? I.check : s.ic;
+        row.appendChild(ic);
+        const txt = div('', 'flex:1;');
+        const lbl = div('', 'font-weight:600;font-size:14px;');
+        lbl.style.color = done ? 'var(--a)' : act ? 'var(--t)' : 'var(--m)';
+        lbl.textContent = s.label;
+        txt.appendChild(lbl);
+        if (done || act) {
+          const sub = div('', 'font-size:12px;color:var(--m);margin-top:2px;');
+          sub.textContent = s.sub;
+          txt.appendChild(sub);
+        }
+        row.appendChild(txt);
+        if (act) { const sp = div('spin', ''); row.appendChild(sp); }
+        pg.appendChild(row);
+      });
+
+      if (S.claimStep >= 4) {
+        const box = div('card', 'background:rgba(0,229,160,.06);border:1.5px solid rgba(0,229,160,.26);text-align:center;padding:20px;margin-top:16px;animation:big .45s ease;');
+        box.insertAdjacentHTML('beforeend', `<div style="font-size:11px;color:var(--m);margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em;">Payout Amount</div><div class="big">₹403</div><div style="font-size:13px;color:var(--m);margin-top:5px;">will be credited to your UPI</div>`);
+        pg.appendChild(box);
+      }
+      return pg;
+    }
+
+    // ── PAYOUT ──
+    function pgPayout() {
+      const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const pg = div('pg', 'justify-content:center;align-items:center;position:relative;overflow:hidden;');
+      addConfetti(pg);
+      const inner = div('', 'text-align:center;z-index:1;position:relative;width:100%;');
+      inner.insertAdjacentHTML('beforeend', `
+    <div style="animation:big .45s ease;">${I.party}</div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:28px;margin:12px 0 4px;">Payout Sent!</div>
+    <div class="big" style="margin:12px 0 4px;">₹403</div>
+    <div style="font-size:14px;color:var(--m);margin-bottom:20px;">sent to your UPI · no claim filed</div>
+    <div class="card" style="text-align:left;margin-bottom:13px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px;"><span style="color:var(--m);">UPI ID</span><span style="font-weight:600;">arjun.kumar@okicici</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px;"><span style="color:var(--m);">Transaction ID</span><span style="font-family:'Space Mono',monospace;font-size:11px;">ZY-PAY-9918273</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--m);">Timestamp</span><span style="font-size:11px;">${now}</span></div>
+    </div>
+    <div class="card" style="background:rgba(0,229,160,.06);border:1.5px solid rgba(0,229,160,.18);margin-bottom:18px;padding:13px;text-align:center;">
+      <div style="font-weight:700;color:var(--a);font-size:14px;margin-bottom:3px;display:flex;align-items:center;justify-content:center;gap:5px;">${I.shieldG} No Claim Filed</div>
+      <div style="font-size:13px;color:var(--m);">Zyro detected, validated and paid you — without a single tap.</div>
+    </div>`);
+      const btn = el('button', { class: 'btn bp', onclick: () => go('dashboard') }, I.bar, ' View Dashboard');
+      inner.appendChild(btn);
+      pg.appendChild(inner);
+      return pg;
+    }
+
+    // ── DASHBOARD ──
+    function pgDashboard() {
+      const cov = 403, lost = 680, ratio = Math.round(cov / lost * 100);
+      const pg = div('pg', '');
+      const hdr = div('hdr', '');
+      hdr.insertAdjacentHTML('beforeend', `<div><div class="logo" style="font-size:20px;">zy<em>ro</em></div><div style="font-size:11px;color:var(--m);display:flex;align-items:center;gap:3px;">Hi, Arjun Kumar ${I.star}</div></div>`);
+      // Admin button removed — only accessible via admin login
+      pg.appendChild(hdr);
+
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="card cg" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(0,229,160,.05),rgba(14,165,233,.03));">
+      <div class="sh" style="margin-bottom:10px;">Today's Summary</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+        <div><div style="font-size:12px;color:var(--m);">Est. Loss</div><div style="font-family:'Space Mono',monospace;font-size:24px;color:var(--r);">₹${lost}</div></div>
+        <div style="text-align:right;"><div style="font-size:12px;color:var(--m);">Covered</div><div style="font-family:'Space Mono',monospace;font-size:24px;color:var(--a);">₹${cov}</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--m);">Protection ratio</span><span style="color:var(--a);font-weight:600;">${ratio}%</span></div>
+      <div style="height:8px;background:var(--sub);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${ratio}%;background:linear-gradient(90deg,var(--a),var(--a2));border-radius:4px;animation:fillW 1.1s ease .2s both;--w:${ratio}%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:5px;"><span style="color:var(--a);">■ Covered ₹${cov}</span><span style="color:var(--m);">■ Gap ₹${lost - cov}</span></div>
+    </div>
+    <div class="sg" style="margin-bottom:12px;">
+      <div class="sc"><div class="sl">Policy</div><div style="font-weight:700;font-size:13px;margin-top:4px;color:var(--a);">Standard Plan</div></div>
+      <div class="sc"><div class="sl">Trust Score</div><div class="sv">82</div></div>
+      <div class="sc"><div class="sl">Total Rides</div><div class="sv" style="color:var(--t);">1,240</div></div>
+      <div class="sc"><div class="sl">Rating</div><div class="sv" style="color:var(--a3);display:flex;align-items:center;gap:3px;">${I.star} 4.7</div></div>
+    </div>
+    <div class="sh">Event Timeline</div>
+    ${[['14:02', 'Heavy rain detected · 34mm/hr', 'var(--a2)'], ['14:08', 'Tri-Gate validation passed', 'var(--a)'], ['14:10', 'Claim auto-processed', 'var(--a)'], ['14:11', '₹403 credited to UPI', 'var(--a)']].map(([t, ev, c]) => `
+    <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;">
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--m);min-width:40px;padding-top:2px;">${t}</div>
+      <div style="width:7px;height:7px;border-radius:50%;background:${c};margin-top:4px;flex-shrink:0;"></div>
+      <div style="font-size:13px;color:rgba(237,242,247,.8);">${ev}</div>
+    </div>`).join('')}`);
+      return pg;
+    }
+
+    // ── ADMIN ──
+    function pgAdmin() {
+      const tab = S.adminTab, tk = S.adminTick || 0;
+      const wrap = div('aw', '');
+
+      // sidebar
+      const sb = div('asb', '');
+      sb.insertAdjacentHTML('beforeend', `<div style="display:flex;align-items:center;gap:7px;padding:9px 12px;margin-bottom:16px;">${I.logo}<span class="logo" style="font-size:19px;">zy<em>ro</em></span><span style="font-size:11px;color:var(--m);">Admin</span></div>`);
+      [['overview', I.bar, 'Overview'], ['map', I.map, 'Live Map'], ['fraud', I.alert, 'Fraud Panel'], ['crisis', I.wave, 'Crisis Sim']].forEach(([t, ic, lbl]) => {
+        const item = div(`asi ${tab === t ? 'on' : ''}`, '');
+        item.innerHTML = ic + ' ' + lbl;
+        item.addEventListener('click', () => { S.adminTab = t; draw(); });
+        sb.appendChild(item);
+      });
+      sb.insertAdjacentHTML('beforeend', '<div style="margin-top:auto;padding-top:16px;"></div>');
+      const exitBtn = div('asi', 'cursor:pointer;');
+      exitBtn.innerHTML = I.logout + ' Sign Out to Login';
+      exitBtn.addEventListener('click', () => signOut());
+      sb.appendChild(exitBtn);
+      wrap.appendChild(sb);
+
+      // right side
+      const right = div('', 'display:flex;flex-direction:column;flex:1;overflow:hidden;');
+
+      // topbar
+      const tb = div('atb', '');
+      const tbL = div('', 'display:flex;align-items:center;gap:11px;');
+      const wBtn = el('button', { class: 'btn bs bsm', onclick: () => signOut() }, I.logout, ' Sign Out');
+      tbL.appendChild(wBtn);
+      tbL.insertAdjacentHTML('beforeend', `<span class="aib">${I.bolt} All Systems Live</span>`);
+      tb.appendChild(tbL);
+      tb.insertAdjacentHTML('beforeend', `<div style="display:flex;align-items:center;gap:9px;"><div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;"><div class="ld"></div>Live</div><span class="tg tg-g">${I.check} Operational</span></div>`);
+      right.appendChild(tb);
+
+      // main
+      const main = div('am', '');
+      if (tab === 'overview') adminOverview(main, tk);
+      if (tab === 'map') adminMap(main);
+      if (tab === 'fraud') adminFraud(main);
+      if (tab === 'crisis') adminCrisis(main);
+      right.appendChild(main);
+      wrap.appendChild(right);
+      return wrap;
+    }
+
+    function adminOverview(main, tk) {
+      const metrics = [
+        { ic: I.people, l: 'Active Policies', v: (12483 + tk * 2).toLocaleString('en-IN'), c: 'var(--a)' },
+        { ic: I.alert, l: 'Live Disruptions', v: '1', c: 'var(--r)' },
+        { ic: I.money, l: 'Total Payouts', v: '₹' + (847234 + tk * 85).toLocaleString('en-IN'), c: 'var(--a2)' },
+        { ic: I.eye, l: 'Fraud Alerts', v: '2', c: 'var(--a3)' },
+      ];
+      const grid = div('ag', '');
+      metrics.forEach(m => {
+        const c = div('ac', '');
+        c.insertAdjacentHTML('beforeend', `<div style="margin-bottom:9px;opacity:.7;">${m.ic}</div><div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:${m.c};">${m.v}</div><div style="font-size:11px;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-top:3px;">${m.l}</div>`);
+        grid.appendChild(c);
+      });
+      main.appendChild(grid);
+      main.insertAdjacentHTML('beforeend', '<div class="sh">Recent Payouts</div>');
+      [['Arjun Kumar', 'Koramangala', '403', 'Sent'], ['Ravi Shankar', 'Indiranagar', '360', 'Sent'], ['Priya Mehta', 'Andheri West', '480', 'Processing'], ['Deepak Singh', 'Cyber City', '240', 'Sent']].forEach(([n, z, a, s]) => {
+        const row = div('', 'display:flex;align-items:center;gap:11px;padding:11px;background:var(--card);border:1px solid var(--bdr);border-radius:11px;margin-bottom:7px;');
+        row.insertAdjacentHTML('beforeend', `<div style="width:34px;height:34px;border-radius:50%;background:var(--sub);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${n[0]}</div><div style="flex:1;"><div style="font-weight:600;font-size:14px;">${n}</div><div style="font-size:12px;color:var(--m);">${z}</div></div><div style="text-align:right;"><div style="font-family:'Space Mono',monospace;font-weight:700;color:var(--a);">₹${a}</div><span class="tg ${s === 'Sent' ? 'tg-g' : 'tg-y'}" style="font-size:9px;">${s === 'Sent' ? I.checkW : ''}${s}</span></div>`);
+        main.appendChild(row);
+      });
+    }
+
+    function adminMap(main) {
+      main.insertAdjacentHTML('beforeend', '<div class="sh">Live Zone Map — Bengaluru</div>');
+      const mb = div('mb', 'height:280px;margin-bottom:15px;');
+      mb.insertAdjacentHTML('beforeend', `<svg width="100%" height="100%" style="position:absolute;inset:0;">${[50, 100, 150, 200, 250].map(y => `<line x1="0" y1="${y}" x2="100%" y2="${y}" stroke="rgba(255,255,255,.04)" stroke-width="1"/>`).join('')}${[80, 160, 240, 320, 400].map(x => `<line x1="${x}" y1="0" x2="${x}" y2="100%" stroke="rgba(255,255,255,.04)" stroke-width="1"/>`).join('')}</svg>`);
+      [{ x: 37, y: 40, r: 42, c: 'rgba(239,68,68,.55)', l: 'Koramangala', d: 1.2 }, { x: 59, y: 52, r: 30, c: 'rgba(245,158,11,.45)', l: 'Indiranagar', d: 1.7 }, { x: 27, y: 60, r: 24, c: 'rgba(14,165,233,.4)', l: 'JP Nagar', d: 2.1 }, { x: 69, y: 28, r: 18, c: 'rgba(0,229,160,.35)', l: 'Whitefield', d: 2.5 }].forEach(z => {
+        mb.insertAdjacentHTML('beforeend', `<div style="position:absolute;left:${z.x}%;top:${z.y}%;width:${z.r * 2}px;height:${z.r * 2}px;transform:translate(-50%,-50%);border-radius:50%;background:${z.c};animation:radar ${z.d}s infinite;"></div><div style="position:absolute;left:${z.x}%;top:${z.y}%;transform:translate(-50%,-50%);font-family:'Space Mono',monospace;font-size:9px;color:#fff;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.9);pointer-events:none;">${z.l}</div>`);
+      });
+      mb.insertAdjacentHTML('beforeend', `<div style="position:absolute;bottom:9px;left:11px;font-size:10px;color:var(--m);">● Disruption &nbsp;● Elevated &nbsp;● Monitoring</div>`);
+      main.appendChild(mb);
+    }
+
+    function adminFraud(main) {
+      main.insertAdjacentHTML('beforeend', `
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;"><div class="sh" style="margin:0;">Fraud Detection</div><span class="tg tg-g">${I.check} Active</span><span class="aib" style="margin-left:auto;">${I.bolt} APRE-FDX</span></div>
+    <div class="fr">${I.alertBig}<div style="flex:1;"><div style="font-weight:600;color:var(--r);font-size:14px;">2 Suspicious Clusters Detected</div><div style="font-size:12px;color:var(--m);margin-top:2px;">Zone D · Workers claiming from identical GPS coordinates · Confidence: 87%</div></div><button class="btn bd bsm">Review</button></div>
+    <div class="fr" style="background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.15);">${I.zap}<div style="flex:1;"><div style="font-weight:600;color:var(--a3);font-size:14px;">1 Delayed Claim Flagged</div><div style="font-size:12px;color:var(--m);margin-top:2px;">Worker ID W-4821 · Claim filed 4.2 hrs after event close</div></div><button class="btn bs bsm">View</button></div>
+    <div class="div"></div>
+    <div class="sh">AI Fraud Signals</div>
+    ${[['Velocity Check', 'Normal', 'var(--a)'], ['GPS Cluster Analysis', '2 Anomalies', 'var(--r)'], ['Platform Cross-check', 'Passed', 'var(--a)'], ['Behavioural Pattern', 'Normal', 'var(--a)'], ['Device Fingerprint', 'Verified', 'var(--a)']].map(([l, v, c]) => `<div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bdr);font-size:14px;"><span style="color:var(--m);">${l}</span><span style="font-weight:600;color:${c};">${v}</span></div>`).join('')}`);
+    }
+
+    function adminCrisis(main) {
+      main.insertAdjacentHTML('beforeend', '<div class="sh">Crisis Simulation Engine</div>');
+      const box = div('ac', 'text-align:center;padding:26px;margin-bottom:16px;');
+
+      box.appendChild(svgEl(I.waveBig));
+      box.insertAdjacentHTML('beforeend', `<div style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;margin:12px 0 7px;">City Flood Simulation</div><div style="font-size:13px;color:var(--m);margin-bottom:20px;line-height:1.65;max-width:380px;margin:0 auto 20px;">Simulate a major city-wide disruption to test parametric payout infrastructure at scale across 2000+ workers.</div>`);
+
+      if (!S.crisis) {
+        const btn = el('button', {
+          class: 'btn bd', style: 'max-width:260px;margin:0 auto;display:flex;', onclick: () => {
+            S.crisis = true; S.crisisN = 0; toast('🚨 City Flood Simulation Started'); draw();
+            const iv = addIV(() => {
+              S.crisisN += Math.floor(80 + Math.random() * 80);
+              if (S.crisisN >= 2148) { S.crisisN = 2148; clearInterval(iv); }
+              draw();
+            }, 160);
+          }
+        }, I.alert, ' Simulate City Flood');
+        box.appendChild(btn);
+      } else {
+        const inner = div('', '');
+        inner.insertAdjacentHTML('beforeend', `<div style="color:var(--r);font-weight:700;font-size:14px;margin-bottom:9px;display:flex;align-items:center;justify-content:center;gap:7px;"><div class="ld r"></div>CRISIS ACTIVE</div><div style="font-family:'Space Mono',monospace;font-size:50px;font-weight:700;color:var(--r);text-align:center;animation:fadeIn .2s ease;">${S.crisisN.toLocaleString('en-IN')}</div><div style="font-size:12px;color:var(--m);margin-top:3px;">workers affected · payouts processing</div><div class="pb" style="margin:14px auto;max-width:280px;"><div class="pbf" style="width:${Math.min(S.crisisN / 2000 * 100, 100)}%;background:linear-gradient(90deg,var(--r),var(--a3));transition:width .15s;"></div></div>`);
+        if (S.crisisN >= 2000) {
+          inner.insertAdjacentHTML('beforeend', `<div class="ac" style="background:rgba(0,229,160,.06);border-color:rgba(0,229,160,.2);margin-top:14px;"><div style="font-weight:700;color:var(--a);margin-bottom:5px;display:flex;align-items:center;gap:5px;">${I.check} Batch Payout Complete</div><div style="font-size:13px;color:var(--m);">2,148 workers · ₹8,64,384 total · Avg ₹402 · 38s</div></div>`);
+        }
+        box.appendChild(inner);
+      }
+      main.appendChild(box);
+
+      main.insertAdjacentHTML('beforeend', '<div class="sh">Scenario Library</div>');
+      ['Heavy Rainfall (Zone A–C)', 'Traffic Gridlock (Ring Road)', 'Platform Outage (Swiggy 3hr)'].forEach(s => {
+        const row = div('', 'display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:var(--card);border:1px solid var(--bdr);border-radius:11px;margin-bottom:7px;');
+        const lbl = div('', 'font-size:14px;font-weight:500;'); lbl.textContent = s;
+        const btn = el('button', { class: 'btn bo bsm', onclick: () => toast('Simulating: ' + s) }, 'Run');
+        row.appendChild(lbl); row.appendChild(btn);
+        main.appendChild(row);
+      });
+    }
+
+    // ── POLICY SCREEN ──
+    function pgPolicy() {
+      const pg = div('pg', '');
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="hdr"><div class="logo" style="font-size:20px;">zy<em>ro</em></div><span class="tg tg-g">${I.check} Active</span></div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;margin-bottom:4px;">My Policy</div>
+    <div style="color:var(--m);font-size:13px;margin-bottom:20px;">ZY-20260320-KRM · Standard Plan</div>
+    <div class="card cg" style="margin-bottom:13px;background:linear-gradient(135deg,rgba(0,229,160,.06),rgba(14,165,233,.04));">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div><div style="font-size:11px;color:var(--m);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;">Active Plan</div><div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;">Standard Plan</div></div>
+        <div style="text-align:right;"><div style="font-size:11px;color:var(--m);margin-bottom:3px;">Valid Until</div><div style="font-weight:700;font-size:14px;">27 Mar 2026</div></div>
+      </div>
+      <div class="sg">
+        <div class="sc"><div class="sl">Weekly Premium</div><div class="sv" style="color:var(--a3);">&#8377;63</div></div>
+        <div class="sc"><div class="sl">Hourly Benefit</div><div class="sv" style="color:var(--a);">&#8377;120</div></div>
+        <div class="sc"><div class="sl">Weekly Cap</div><div class="sv" style="color:var(--a2);">&#8377;600</div></div>
+        <div class="sc"><div class="sl">Trust Score</div><div class="sv">82</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:13px;">
+      <div class="sh">Coverage Triggers</div>
+      <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bdr);">${I.rain}<div style="flex:1;"><div style="font-weight:600;font-size:13px;">Heavy Rainfall</div><div style="font-size:12px;color:var(--m);">&gt; 20 mm/hr for 1.5+ hrs</div></div><span class="tg tg-b">Active</span></div>
+      <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bdr);">${I.traffic}<div style="flex:1;"><div style="font-weight:600;font-size:13px;">Traffic Gridlock</div><div style="font-size:12px;color:var(--m);">Order drop &gt; 50% for 1hr</div></div><span class="tg tg-y">Active</span></div>
+      <div style="display:flex;align-items:center;gap:11px;padding:10px 0;">${I.down}<div style="flex:1;"><div style="font-weight:600;font-size:13px;">Platform Outage</div><div style="font-size:12px;color:var(--m);">App downtime &gt; 45 min</div></div><span class="tg tg-r">Active</span></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="sh">This Week</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:14px;"><span style="color:var(--m);">Payouts received</span><span style="font-weight:700;color:var(--a);">&#8377;403</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:14px;"><span style="color:var(--m);">Events triggered</span><span style="font-weight:700;">1</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--m);">Premium paid</span><span style="font-weight:700;color:var(--a3);">&#8377;63</span></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn bs" style="font-size:13px;" onclick="go('dashboard')">${I.bar} Dashboard</button>
+      <button class="btn bo" style="font-size:13px;" onclick="go('monitoring')">${I.radio} Live Monitor</button>
+    </div>
+  `);
+      return pg;
+    }
+
+    // ── PROFILE SCREEN ──
+    function pgProfile() {
+      const pg = div('pg', '');
+      const avatarRow = div('', 'text-align:center;margin-bottom:22px;');
+      avatarRow.insertAdjacentHTML('beforeend', `
+    <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,rgba(0,229,160,.2),rgba(14,165,233,.2));border:2px solid rgba(0,229,160,.35);display:flex;align-items:center;justify-content:center;margin:0 auto 11px;font-family:Syne,sans-serif;font-size:28px;font-weight:800;color:var(--a);">A</div>
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:20px;">Arjun Kumar</div>
+    <div style="font-size:13px;color:var(--m);margin-top:3px;">+91 9999999999 &middot; Koramangala</div>
+    <div style="margin-top:10px;display:flex;justify-content:center;gap:8px;">
+      <span class="tg tg-g">${I.check} Verified</span>
+      <span class="tg tg-b">Trust: 82</span>
+    </div>`);
+      pg.insertAdjacentHTML('beforeend', `<div class="hdr"><div class="logo" style="font-size:20px;">zy<em>ro</em></div></div>`);
+      pg.appendChild(avatarRow);
+      pg.insertAdjacentHTML('beforeend', `
+    <div class="card" style="margin-bottom:11px;">
+      <div class="sh">Rider Stats</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:14px;"><span style="color:var(--m);">Platform</span><span style="font-weight:600;">Swiggy</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:14px;"><span style="color:var(--m);">Total Rides</span><span style="font-weight:600;">1,240</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:14px;"><span style="color:var(--m);">Rating</span><span style="font-weight:600;color:var(--a3);">${I.star} 4.7</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--m);">Member Since</span><span style="font-weight:600;">Jan 2024</span></div>
+    </div>
+    <div class="card" style="margin-bottom:11px;">
+      <div class="sh">Account</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:14px;"><span style="color:var(--m);">UPI ID</span><span style="font-weight:600;font-size:13px;">arjun.kumar@okicici</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--m);">Active Policy</span><span style="font-weight:600;color:var(--a);">Standard Plan</span></div>
+    </div>`);
+      const signOutBtn = el('button', {
+        class: 'btn',
+        style: 'margin-top:auto;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--r);font-size:15px;',
+        onclick: signOut
+      }, I.logout, ' Sign Out');
+      pg.appendChild(signOutBtn);
+      return pg;
+    }
+
+    function signOut() {
+      clearAll();
+      S.role = null;
+      S.screen = 'login'; S.loginMode = 'worker'; S.loginStep = 1; S.loginErr = '';
+      S.qStep = 0; S.qAnswers = { platform: 'Swiggy', hours: '6\u2013\u20138\u00a0hrs', zone: 'Koramangala, Bengaluru', vehicle: 'Two-Wheeler', experience: '2\u20133\u00a0years', income: '\u20b918,000\u201325,000/mo' };
+      S.planLoading = true; S.planPct = 0; S.planStepIdx = 0;
+      S.payStep = 0; S.monTick = 0; S.monBad = false;
+      S.triStep = 0; S.claimStep = 0;
+      S.adminTab = 'overview'; S.adminTick = 0; S.crisis = false; S.crisisN = 0;
+      draw();
+    }
+
+    // ── NAVBAR ──
+    function navbar(scr) {
+      if (!['monitoring', 'dashboard', 'policy', 'profile'].includes(scr)) return null;
+      const nb = div('nb', '');
+      [['home', I.home, 'Home', 'dashboard'], ['shield', I.shield, 'Policy', 'policy'], ['radio', I.radio, 'Live', 'monitoring'], ['user', I.user, 'Profile', 'profile']].forEach(([, ic, lbl, dest]) => {
+        const item = div(`ni ${scr === dest ? 'on' : ''}`, '');
+        item.innerHTML = ic;
+        const sp = document.createElement('span'); sp.textContent = lbl;
+        item.appendChild(sp);
+        item.addEventListener('click', () => go(dest));
+        nb.appendChild(item);
+      });
+      return nb;
+    }
+
+    // ── CONFETTI ──
+    function addConfetti(parent) {
+      const cols = ['#00e5a0', '#0ea5e9', '#f59e0b', '#f472b6', '#a78bfa'];
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'cp';
+        const w = 6 + Math.random() * 5;
+        p.style.cssText = `left:${Math.random() * 100}%;top:0;width:${w}px;height:${w}px;background:${cols[i % 5]};animation-duration:${1.1 + Math.random() * .9}s;animation-delay:${Math.random() * .6}s;`;
+        parent.appendChild(p);
+      }
+    }
+
+    // ════════════════════════════════════
+    // DRAW — builds DOM fresh each call
+    // ════════════════════════════════════
+    function draw() {
+      const shell = document.getElementById('shell');
+      shell.innerHTML = '';
+
+      const s = S.screen;
+
+      if (s === 'admin') {
+        if (S.role !== 'admin') { S.screen = 'dashboard'; draw(); return; }
+        shell.style.cssText = 'width:100%;max-width:100%;height:100vh;max-height:100vh;border-radius:0;border:none;';
+        document.body.style.alignItems = 'flex-start';
+        shell.appendChild(pgAdmin());
+        return;
+      }
+
+      // Worker-only screens — if admin tries to access, bounce to admin panel
+      const workerScreens = ['onboarding', 'plan', 'activation', 'monitoring', 'trigger', 'claim', 'payout', 'dashboard', 'policy', 'profile'];
+      if (S.role === 'admin' && workerScreens.includes(s)) { S.screen = 'admin'; draw(); return; }
+      document.body.style.alignItems = 'center';
+      if (window.innerWidth >= 500) {
+        shell.style.cssText = 'width:390px;height:820px;max-height:820px;border-radius:28px;border:1px solid var(--bdr);box-shadow:0 40px 80px rgba(0,0,0,.7);background:var(--surf);display:flex;flex-direction:column;overflow:hidden;position:relative;';
+      } else {
+        shell.style.cssText = 'width:100%;height:100vh;max-height:100vh;border-radius:0;background:var(--surf);display:flex;flex-direction:column;overflow:hidden;position:relative;';
+      }
+
+      let pg;
+      switch (s) {
+        case 'login': pg = pgLogin(); break;
+        case 'onboarding': pg = pgOnboarding(); break;
+        case 'plan': pg = pgPlan(); break;
+        case 'activation': pg = pgActivation(); break;
+        case 'monitoring': pg = pgMonitoring(); break;
+        case 'trigger': pg = pgTrigger(); break;
+        case 'claim': pg = pgClaim(); break;
+        case 'payout': pg = pgPayout(); break;
+        case 'dashboard': if (S.role === 'admin') { S.screen = 'admin'; draw(); return; } pg = pgDashboard(); break;
+        case 'policy': pg = pgPolicy(); break;
+        case 'profile': pg = pgProfile(); break;
+        default: pg = pgLogin();
+      }
+
+      shell.appendChild(pg);
+      const nb = navbar(s);
+      if (nb) shell.appendChild(nb);
+    }
+
+    draw();
+  </script>
+</body>
+
+</html>
