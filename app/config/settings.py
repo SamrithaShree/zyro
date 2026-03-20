@@ -1,0 +1,4 @@
+# System Constants
+MIN_PAYOUT = 50.0
+RETRY_LIMIT = 3
+SYSTEM_TIMEZONE = "UTC"
