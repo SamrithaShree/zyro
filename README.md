@@ -2,422 +2,230 @@
 
 # Zyro
 
-**Parametric income protection for food delivery partners — weekly-priced, AI-driven, zero paperwork, automatic payout.**
+**Parametric income protection for food delivery partners — weekly-priced, trigger-driven, designed for automatic payout without the worker filing anything.**
 
-Zyro is purpose-built for one user: a Swiggy or Zomato delivery partner who loses income the moment heavy rain floods their zone, a curfew shuts down their area, or a platform outage kills order flow. When a verified disruption hits, Zyro detects it, confirms the worker was active and affected, and transfers a payout — without the worker filing anything.
-
-This is not traditional insurance. There is no claim form. There is no adjuster. There is no waiting period. Zyro is a parametric income protection system where the trigger is objective, the payout is automatic, and the entire cycle from disruption to payment completes in under 90 minutes.
-
-> [!IMPORTANT]
-> **What Zyro covers:** Loss of income opportunity caused by verified external disruptions.
-> **What Zyro strictly excludes:** Health, life, accidents, vehicle damage, or any physical loss.
-
-> [!IMPORTANT]
-> **Pricing model:** Weekly — aligned to how delivery workers actually earn and plan. Premium is calculated, locked, and renewed every 7 days.
+> Zyro is a Phase 1 hackathon concept and architecture submission for Guidewire DEVTrails 2026.
+> A working prototype is under active development. Sections labelled *Advanced / Production* are architecture-defined but not yet implemented.
 
 ---
+## Quick Navigation
 
-## Quick Navigation Index
-
+- [Problem Context](#problem-context)
+- [Who Zyro Is Built For](#who-zyro-is-built-for)
+- [Research and Data Justification](#research-and-data-justification)
+- [Solution Overview](#solution-overview)
+- [End-to-End System Workflow](#end-to-end-system-workflow)
+- [Onboarding Flow](#onboarding-flow)
+- [Weekly Premium Model](#weekly-premium-model)
+- [Parametric Trigger Framework](#parametric-trigger-framework)
+- [AI/ML Integration](#aiml-integration)
+- [Fraud Prevention and Validation](#fraud-prevention-and-validation)
+- [Payout Logic](#payout-logic)
+- [Risk Governance and Force Majeure](#risk-governance-and-force-majeure)
+- [Financial Resilience Model](#financial-resilience-model)
+- [Crisis / Market-Shift Scenario](#crisis--market-shift-scenario)
+- [Dashboard Views](#dashboard-views)
+- [Platform Choice](#platform-choice)
+- [Tech Stack](#tech-stack)
+- [MVP vs. Advanced Architecture](#mvp-vs-advanced-architecture)
+- [Development Plan](#development-plan)
 - [Problem Statement Compliance](#problem-statement-compliance)
 - [Key Differentiators](#key-differentiators)
-- [24-Hour Market Shift: Crisis Handling](#24-hour-market-shift-crisis-handling)
-- [AI/ML Integration](#aiml-integration)
-- [Parametric Trigger Framework](#parametric-trigger-framework)
-- [The Worker Zyro Is Built For](#the-worker-zyro-is-built-for)
-- [Persona-Based Scenarios](#persona-based-scenarios)
-- [Why Mobile-First](#why-mobile-first)
-- [End-to-End Application Workflow](#end-to-end-application-workflow)
-- [Module 1 — Onboarding and Policy Recommendation (APRE-XAI)](#module-1--onboarding-and-policy-recommendation-apre-xai)
-- [Weekly Premium Model](#weekly-premium-model)
-- [Worker Impact Validation Engine (WIVE)](#worker-impact-validation-engine-wive)
-- [Event Generation Engine (EGM)](#event-generation-engine-egm)
-- [Fraud Detection and Anti-Spoofing](#fraud-detection-and-anti-spoofing)
-- [Analytics Dashboard](#analytics-dashboard)
-- [Why Zyro Can Actually Be Built](#why-zyro-can-actually-be-built)
-- [What We Will Demonstrate in the Hackathon Prototype](#what-we-will-demonstrate-in-the-hackathon-prototype)
-- [Integrations Architecture](#integrations-architecture)
-- [Tech Stack](#tech-stack)
-- [MVP vs Production Feasibility](#mvp-vs-production-feasibility)
-- [Development Roadmap](#development-roadmap)
-- [Compliance and Auditability](#compliance-and-auditability)
-- [Final Positioning](#final-positioning)
+- [Future Scope](#future-scope)
+- [Closing Summary](#closing-summary)
 
 ---
 
-## Problem Statement Compliance
+## Problem Context
 
-This section maps Zyro's solution directly to the Guidewire DEVTrails 2026 requirements.
+India has an estimated 12 million food delivery workers on platforms like Swiggy and Zomato. They are digitally observable, geographically bounded, and paid on weekly settlement cycles. They are also almost entirely without income protection.
 
-| Requirement | Zyro's Response |
+When heavy rain shuts down a zone for three hours on a Friday evening, a delivery partner loses Rs. 300–500 from their weekly settlement — immediately. They cannot file a claim form mid-shift. They do not have a claims vocabulary, a printer, or an HR desk. And no current product compensates that loss in any timeframe that is useful to them.
+
+Traditional insurance is structurally incompatible with this worker: monthly commitment cycles, paper-based processes, and claims resolution that takes weeks. The problem is not that good products exist but workers do not know about them — it is that no suitable product exists at all for this segment.
+
+Zyro is designed to address this gap with a parametric approach: the trigger is external and objective, the payout is calculated automatically, and the worker does not take any action.
+
+---
+
+## Who Zyro Is Built For
+
+### Financial Profile
+
+| Metric | Typical Value |
 |---|---|
-| Single delivery partner sub-category | Food delivery partners (Swiggy / Zomato) — two-wheeler-based, urban, India |
-| Coverage: income loss only | Zyro covers only loss of earning opportunity |
-| Excluded: health, life, accidents, vehicle | Explicitly and architecturally excluded |
-| Weekly pricing model | Premium calculated, activated, and renewed weekly |
-| AI-powered risk assessment | APRE-XAI engine: XGBoost-based premium prediction, SHAP explainability, cold-start ML |
-| Intelligent fraud detection | Multi-signal anomaly scoring, trust score evolution, duplicate prevention, cluster detection |
-| Parametric automation | External signals trigger claims automatically — no manual filing |
-| Integration capabilities | Weather APIs (IMD, OpenWeatherMap), traffic (Google Maps / HERE), mock platform feed, Razorpay payment gateway |
-| Optimized onboarding | OTP login + AI plan recommendation in under 2 minutes on mobile |
-| Policy creation with weekly pricing | Locked weekly contract: premium, benefit, cap, trigger types |
-| Claim triggering through parametric events | Tri-Gate validation engine → automatic event creation → batch validation |
-| Payout processing | ZyroCredit: deterministic, idempotent, UPI / bank transfer via Razorpay |
-| Analytics dashboard | Dual-view: worker "Saved vs Lost" dashboard + admin disruption heatmap and fraud panel |
-| Crisis / market shift scenario | Dedicated section with timestamped surge response, fraud tightening, financial controls |
+| Daily earnings | Rs. 700 – 1,200 |
+| Weekly income (settled by platform) | Rs. 4,900 – 8,400 |
+| Monthly fuel and vehicle maintenance costs | Rs. 3,000 – 5,500 |
+| Monthly smartphone EMI | Rs. 800 – 1,800 |
+| Monthly micro-loan repayment | Rs. 1,500 – 3,500 |
+| Total fixed monthly obligations (estimated) | Rs. 5,300 – 10,800 |
+| Liquid savings buffer | Rs. 0 – 2,000 (typically under one week's income) |
+| Working hours per day | 8 – 10 hours, two-wheeler, phone-dependent |
+
+*Figures drawn from NITI Aayog gig worker reports, Swiggy/Zomato partner program public disclosures, and platform-based earnings reporting in consumer finance research.*
+
+### Why a Single Disruption Creates Cascading Risk
+
+A three-hour rain disruption on a peak evening removes Rs. 300–500 from the weekly settlement. For a worker whose fixed obligations consume Rs. 5,000–10,000 per month, and whose liquid buffer is near zero, this is not a manageable setback. A single disruption can lead to a missed smartphone EMI payment, which triggers a late fee, which compounds into a micro-loan default the following week. There is no HR desk to advance salary. There is no employer to absorb the gap.
+
+### Income Risk: Delivery Worker vs. Salaried Employee
+
+| Factor | Food Delivery Partner | Salaried Employee |
+|---|---|---|
+| Income when disruption hits | Drops to zero immediately | Unaffected |
+| Recovery mechanism | None | Paid leave, employer cover |
+| Financial safety net | None to minimal | EPF, ESI, group insurance |
+| Ability to file an insurance claim mid-disruption | Practically impossible | Standard HR process |
+| Time to receive any compensation | Weeks to never, under traditional insurance | Often immediate |
+| Estimated disruption days per monsoon month | 4–6 | Rare |
 
 ---
 
-## Key Differentiators
+## Research and Data Justification
 
-| Differentiator | Why It Matters |
-|---|---|
-| Worker Impact Validation Engine (WIVE) | Pays workers who were actually active and affected — not everyone in the zone. Prevents financial leakage and unfair overcompensation. |
-| Tri-Gate Trigger Validation | Requires environmental evidence, economic impact confirmation, and temporal persistence before any event is valid. Eliminates false triggers from noise. |
-| Degraded-mode resilience | The ingestion layer continues operation when external APIs fail — the most critical time for the system to function. |
-| Bounded payout architecture | Weekly caps, partial replacement limits, and loading factor reserve prevent correlated mass-disruption events from causing financial collapse. |
-| Confidence-tiered payout lanes | High-trust workers receive instant payouts. Questionable claims are quarantined, not rejected. Workers are not punished for data gaps. |
-| H3 hyperlocal zone logic | Neighborhood-scale precision. A disruption 2 kilometers away does not trigger payouts in an unaffected zone. |
-| Policy-to-payout contract consistency | What the worker agreed to at onboarding governs payout exactly. No post-event recalculation, no hidden re-pricing. |
-| Explainable AI recommendations | Workers understand their premium. Insurers have feature attribution for every fraud score. Neither side faces a black box. |
+Zyro's trigger thresholds are drawn from published government data — not set by internal assumption.
 
----
-
-## 24-Hour Market Shift: Crisis Handling
-
-This section demonstrates Zyro's ability to handle the hardest scenario in parametric insurance: a sudden city-scale disruption generating thousands of simultaneous claims while fraud risk peaks and financial exposure must remain bounded.
-
-### The Scenario
-
-**7:00 PM, Friday, major Indian metro.** Flash flooding begins simultaneously across three H3 zone clusters. Approximately 2,400 delivery workers with active Zyro policies are working in these zones. This is peak earning time, peak claim risk, and peak fraud risk — simultaneously.
-
----
-
-### Timeline: System Response
-
-| Time | System Action |
-|---|---|
-| T+0 min | Rainfall crosses threshold. Weather API + traffic congestion spike + order-drop signal all ingested. |
-| T+8 min | Gate 3 persistence confirmed across all three zones. Three validated trigger statuses produced. |
-| T+9 min | EGM creates three FINALIZED event objects. Zone locking prevents sub-zone signal duplicates from creating redundant events. |
-| T+10 min | 2,400 workers enter WIVE validation queue. WIVE runs per-worker checks in a stateless, horizontally scalable compute pool. |
-| T+14 min | WIVE completes. 1,847 workers eligible; 553 excluded (offline, inactive, uncovered, no zone overlap). |
-| T+15 min | ZyroCredit queues 1,847 claim-payout pairs. Idempotency keys assigned. |
-| T+15–42 min | Payment executes in batches of 200 with rate-limited gateway calls. Redis retry queue handles transient failures. |
-| T+42–71 min | First batch through final batch confirmed. 98%+ of eligible claims paid within 75 minutes. |
-
----
-
-### Financial Controls During Surge
-
-**Why the system does not overpay:**
-- Every policy has a weekly cap. Maximum per-worker payout for the Standard tier is ₹600.
-- Partial replacement (max 70%) is enforced per policy — not overridden during surge events.
-- The loading factor in the premium formula was designed to price in correlated disruption events.
-
-**Exposure calculation for this scenario:**
-
-| Parameter | Value |
-|---|---|
-| Eligible workers | 1,847 |
-| Average payout | ~₹340 |
-| Total payout required | ~₹6.28 lakh |
-| Weekly premium pool from this cohort | ~₹1.4 lakh |
-| Reserve pool draw required | ~₹4.88 lakh |
-
-In hackathon mode, this reserve is simulated. In production, a parametric reinsurance treaty would cover correlated exposure beyond a defined threshold of the premium pool.
-
-**Post-crisis recalibration:** Zone disruption probability models update after the event. Workers in affected zones may see minor premium increases at next weekly renewal. Fraud review outcomes feed back into trust score updates.
-
----
-
-### Fraud Controls During Surge
-
-A mass-disruption event is the highest-value fraud target: thousands of legitimate claims provide cover for coordinated fraudulent ones.
-
-**Crisis-mode fraud response:**
-- Confidence thresholds are tightened automatically when claim volume exceeds baseline by 3x or more
-- New accounts (< 2 weeks old) route to medium-confidence regardless of signal quality
-- Spatio-temporal cluster detection runs continuously — same device subnet or zone-first-appearance flags are escalated immediately
-- High-trust workers (trust score > 80) process without additional scrutiny
-
-**Three-lane prioritization:**
-1. **Primary lane** — High-trust, high-confidence workers: instant payment within the first 42 minutes
-2. **Delayed lane** — Medium-confidence workers: resolved within 2–4 hours
-3. **Review queue** — Anomaly-flagged workers: fraud team review within 24 hours; claim held
-
----
-
-### What the Worker Sees During Crisis
-
-- Push notification within minutes of event FINALIZED
-- Status updates through app: "Detected → Validating → Processing → Paid"
-- No action required
-- If in delayed lane: "We are verifying your eligibility — payout expected within 4 hours"
-- Payout notification with event details when complete
-
-### What the Admin/Insurer Sees
-
-- Live H3 heatmap lighting up across affected zones in near-real-time
-- Event confidence scores, affected worker counts, validation progress
-- Fraud alert panel showing cluster detection results and escalations
-- Reserve pool exposure tracker: running total payout vs. available reserve margin
-- Lane distribution: % of claims in primary / delayed / review queue
-- System health: API availability, processing latency, queue depth during surge
-
----
-
-## AI/ML Integration
-
-AI is used at specific decision points where rule-based logic either produces wrong answers or fails to generalize. Every AI insertion in Zyro has a clear justification.
-
-### MVP — Core AI Components
-
-| Role | Where Used | Approach | Why Rules Are Insufficient |
+| Source | Authority | Data Used | Why This Threshold |
 |---|---|---|---|
-| Premium prediction | Onboarding (APRE-XAI) | XGBoost regressor on worker behavioral features | Income patterns and zone risk are nonlinear and interdependent |
-| Plan explainability | Onboarding output | SHAP-style feature attribution | Workers and regulators need to understand why they received a specific price |
-| Cold-start profile | New worker onboarding | Cohort clustering from zone and platform join-date | No individual history exists; inference from similar workers is needed |
-| Activity state inference | WIVE validation | Lightweight classifier on kinetic and platform signals | Platform feed can be delayed; ML infers true work state from motion and session signals |
-| Basic anomaly scoring | Fraud detection | Rule-enhanced anomaly scoring, lightweight Isolation Forest | Simple rules miss novel spoofing patterns and coordinated behavior |
-| Trigger confidence support | Trigger engine | Gradient-boosted classifier on multi-signal input | Sensor noise and API inconsistency produce borderline signals that rules cannot resolve |
+| IMD Rainfall Records | India Meteorological Department | Rainfall > 15 mm/hr classified as heavy rain | IMD's own urban rainfall classification; above this threshold, road saturation and reduced visibility materially affect two-wheeler delivery feasibility |
+| CPCB AQI Database | Central Pollution Control Board | AQI > 400 = Severe band; GRAP-IV activates at AQI > 450 | CPCB's own six-tier index; above 400, CPCB recommends avoiding outdoor physical exertion |
+| NITI Aayog Gig Economy Report | NITI Aayog, 2022 | 7.7 million gig workers; < 5% have income protection | Establishes market size and protection gap |
+| CAQM GRAP Framework | Commission for Air Quality Management | GRAP-IV bans and commercial vehicle restrictions | Legal basis for zone closure triggers; LCVs and two-wheelers restricted first |
+| NDMA Urban Flood Guidelines | National Disaster Management Authority | Rainfall thresholds for traffic advisories | Secondary validation of the 15 mm/hr threshold |
+| Platform Settlement Disclosures | Swiggy / Zomato partner program | Weekly settlement cycles, per-order earnings bands | Validates the weekly premium model's alignment with actual income timing |
 
-### Advanced — Production AI Components
+### Why the Thresholds Are Operationally Grounded
 
-| Role | Where Used | Approach |
-|---|---|---|
-| Fraud trust scoring | All claim events | Gradient-boosted model, updated incrementally per worker history |
-| Spatio-temporal cluster fraud detection | ZyroCredit / fraud layer | DBSCAN-style clustering on claim location + timestamp |
-| Zone risk trend forecasting | Insurer dashboard | Time-series model on historical disruption and claim data |
-| Economic impact quantification | Gate 2 validation | Regression model comparing real-time signals to historical baselines |
+**15 mm/hr (rainfall):** Below this level, surface flooding is localised and two-wheeler movement is mildly restricted but largely manageable. Above it, road saturation levels and platform-side demand collapse combine to produce a measurable drop in delivery earnings. The 15 mm/hr mark is not a Zyro choice — it is IMD's own "heavy rain" classification used in urban weather advisories.
 
-**The principle:** AI is used where it matters. Premium pricing, fraud detection, and activity inference are genuinely nonlinear problems. Claim deduplication, event locking, and payout calculation are deterministic operations that rules handle correctly.
+**AQI 400 (pollution):** This is the boundary between the "Very Poor" and "Severe" bands in CPCB's index. At Severe and above, CPCB explicitly recommends avoiding outdoor physical activity. A delivery worker on a two-wheeler for eight hours at AQI 400+ faces genuine health risk, and platform-side demand in the same area also drops as customers reduce outdoor orders.
 
 ---
 
-## Parametric Trigger Framework
+## Solution Overview
 
-### Covered Disruption Types
+Zyro works in five steps from the worker's perspective:
 
-| Category | Examples | Threshold / Signal Source |
-|---|---|---|
-| Environmental | Heavy rain, flooding, extreme heat, severe pollution | Rainfall > 15mm/hr; Temp > 43°C; AQI > 300 — IMD, OpenWeatherMap, CPCB |
-| Social / Administrative | Curfews, local strikes, zone closures, market shutdowns | Government alert feeds; sharp mobility drop |
-| Operational | Platform-level order outage in a zone | Order-drop detection > 50%; mock platform feed |
+1. **Onboard once.** The worker downloads the app, verifies via OTP, answers a short form about their platform, zone, and earnings, and activates a weekly plan via UPI auto-debit. This is designed to complete in under two minutes on a mobile device.
 
-### Why Threshold Alone Is Not Enough
+2. **Coverage is active weekly.** Each week, a small premium is deducted automatically. The policy parameters — premium, payout rate, weekly cap, covered trigger types — are fixed at activation and do not change during the week.
 
-A trigger threshold breach — even a confirmed one — does not automatically mean a valid claim. A brief 5-minute rain spike does not meaningfully disrupt deliveries. A rain event in one city corner may not affect order flow in another. A heat advisory at 10 PM has no impact on a worker who finished their shift at 8 PM.
+3. **The system monitors continuously.** Weather, air quality, traffic, and platform demand signals are ingested in real time. The worker does nothing.
 
-Zyro uses the **Tri-Gate Validation Framework** to ensure every trigger is:
-1. Real (environmental signal confirmed)
-2. Economically meaningful (earning opportunity actually reduced)
-3. Persistent enough to matter (not transient noise)
+4. **When a verified disruption hits, the system validates automatically.** It confirms the disruption is real (environmental), economically meaningful (demand impact), and sustained (not transient). It then checks whether this specific worker was active and in the affected zone.
 
-### Tri-Gate Validation
+5. **Payout transfers to UPI.** If the worker passes eligibility checks, the payout is calculated and sent. The worker receives a push notification. No paperwork, no claim form, no follow-up needed.
 
-- **Gate 1 — Environmental Detection:** Measured disruption crosses defined threshold for its type and zone.
-- **Gate 2 — Economic Impact Verification:** Proxy signals confirm actual earning opportunity reduction. Checks: order-drop rate, traffic congestion index, demand reduction estimate, delivery latency anomaly. A disruption that does not demonstrably reduce orders does not proceed.
-- **Gate 3 — Temporal Persistence:** The disruption must persist for a minimum qualifying duration. Prevents one-minute anomalies from becoming claims.
-
-**Level 1 direct triggers** (curfew, complete zone closure, severe flood) skip Gate 2 and are fast-tracked to event creation. Level 2 triggers (rain, heat, pollution, traffic disruption) require all three gates.
-
-### Hysteresis and Recovery
-
-The trigger does not end when one signal briefly dips. Recovery logic requires multiple signals to return to baseline simultaneously, enforcing a minimum recovery hold time before the event closes. This prevents premature closure and under-compensation during recovery dips.
-
-### After Trigger Confirmation
-
-1. Event Generation Engine receives validated trigger
-2. FINALIZED event object is created for the affected H3 zone
-3. Zone is locked — one active event per zone prevents duplicates
-4. All workers with active policies in the zone enter validation queue
-5. Worker receives push: "Disruption confirmed in your zone. Coverage active."
+This is the core value proposition: a delivery partner earns money all week with their phone in their pocket, and if a disruption hits, Zyro handles the entire protection cycle without them needing to do anything.
 
 ---
 
-## The Worker Zyro Is Built For
-
-A Swiggy or Zomato delivery partner operating in a high-density Indian city looks like this in practice:
-
-- Earns ₹700–1,200 per day, settled weekly by the platform
-- Works 8–10 hours, entirely on a two-wheeler, entirely on a phone
-- Has no fixed employer, no HR, and no structured financial safety net
-- Loses income the same day a disruption hits — not gradually, immediately
-- Cannot take two weeks to file insurance paperwork; they may not have a printer, a laptop, or a claims vocabulary
-- Makes financial decisions in short cycles — "can I afford this week?" not "can I afford this year?"
-
-When heavy rain shuts down their zone for 3 hours on a Friday evening, that is ₹300–500 gone. There is no mechanism that currently compensates that loss quickly. Most do not have emergency savings to absorb it. Most would benefit enormously from even a partial, fast payout.
-
-**Why this persona is ideal for Zyro's first version:**
-
-- Workers are digitally observable through platform apps — their activity state is a real signal
-- They operate in geographically bounded zones — hyperlocal triggers are feasible
-- Their income cycle is weekly — weekly coverage windows map naturally
-- The disruption risk is concrete, frequent, and data-driven
-- The scale is enormous: tens of millions of delivery partners across India, with near-zero income protection coverage today
-
-Zyro starts with two-wheeler food delivery partners specifically because this segment is where the problem is sharpest, the signals are richest, and the product-market fit is most immediate.
-
----
-
-## Persona-Based Scenarios
-
-### Scenario 1 — Ramesh, Swiggy, Bengaluru (Established Worker)
-
-Ramesh has been delivering for Swiggy for 3 years. He earns around ₹950/day, works 10 hours, and operates across Koramangala and Indiranagar — both high-rain-exposure zones. APRE-XAI recommends the **Standard Plan at ₹63/week** based on his income pattern and zone risk.
-
-**What happens:** It is Tuesday evening, 6:30 PM. Rainfall hits 18mm/hr. Traffic in his zone spikes 70%. Order volume drops 52%. Gate 1, Gate 2, and Gate 3 all clear within 8 minutes.
-
-**System response:** EGM creates a FINALIZED event. WIVE confirms Ramesh was active and in-zone for the full 2.8-hour event. Payout: `₹120 × 2.8 × 1.2 × 1.0 = ₹403`.
-
-**What Ramesh experiences:** At 6:42 PM, he gets a push notification: "Heavy rain in your zone — coverage active." At 7:08 PM: "₹403 sent to your UPI." He checks the app and sees the payout on his dashboard.
-
-He did not file anything. He received compensation faster than the rain event ended.
-
----
-
-### Scenario 2 — Priya, Zomato, Chennai (Frequent Disruption Zone)
-
-Priya operates near Anna Nagar, where local political events and market strikes are common. She has many zero-income days. APRE-XAI flags her high zone-closure exposure and recommends the **Premium Plan at ₹89/week**, covering both environmental and social disruptions.
-
-**What happens:** Saturday 7:00 PM. A zone curfew is declared. This is a Level 1 direct trigger — no Gate 2 or Gate 3 required. EGM creates a FINALIZED event immediately.
-
-**System response:** 38 workers with active Standard or Premium plans in the zone enter validation. WIVE confirms Priya was mid-delivery when the curfew hit. Payout: `₹150 × 3.0 × 1.5 × 0.88 = ₹594`.
-
-**What Priya experiences:** Push at 7:04 PM: "Curfew declared — your coverage is active." By 7:22 PM, her UPI receives ₹594. "Zyro paid me before I even made it home."
-
----
-
-### Scenario 3 — Arjun, Zomato, Hyderabad (New Worker)
-
-Arjun joined Zomato 10 days ago. He has no meaningful earnings history. APRE-XAI's cold-start protocol assigns him a zone-cohort-derived risk profile and recommends the **Basic Plan at ₹29/week**.
-
-**What happens:** Thursday 2 PM. A heat advisory triggers (44°C, sustained 2.1 hours). Arjun is in zone and active.
-
-**System response:** Because Arjun is a new account, his claim routes through the medium-confidence path. Kinetic and session signals confirm he is genuinely active. Payout: `₹80 × 2.1 × 1.1 × 0.95 = ₹175`. Delayed by 22 minutes due to the verification path.
-
-**What Arjun experiences:** Push at 2:08 PM: "Heat alert confirmed — verifying your eligibility." At 2:31 PM: "₹175 sent to your UPI." Dashboard note: "Your trust profile is building — faster payouts ahead."
-
----
-
-## Why Mobile-First
-
-**For the worker:** A delivery partner on a bike in the rain does not open a laptop. They need a phone app that is fast, simple, and works on a weak connection. Zyro's worker product is mobile because that is the only form factor their work context supports.
-
-Key mobile-specific capabilities:
-- OTP login — no username/password setup
-- Plan activation via UPI auto-debit — no bank form, no NEFT details
-- Push alerts when a disruption is detected in their zone
-- Payout confirmation on the lock screen
-- Background telemetry collection (passive, not intrusive) for eligibility and fraud validation
-
-**For the insurer/admin:** Web dashboard for insurer analytics, risk oversight, fraud monitoring, and compliance audit. No operational use case for an insurer requires a mobile-only interface.
-
-This split is intentional and product-correct. It is not a technical simplification — it is the right UX architecture for the two audiences.
-
----
-
-## End-to-End Application Workflow
-
-The complete flow from worker signup to payout transfer, from both the worker's and system's perspective.
-
-### From the Worker's Perspective
-
-| Step | What the Worker Does | What the Worker Sees |
-|---|---|---|
-| 1. Onboarding | Opens Zyro app, enters OTP, answers 6 questions | Fast, guided form on mobile |
-| 2. Plan Recommendation | Reviews AI-suggested plan with plain-language explanation | "Recommended: Standard Plan — ₹63/week. Reason: rain-heavy zone, moderate income variability." |
-| 3. Policy Activation | Selects plan, authorizes UPI auto-debit | Policy active. Coverage starts immediately. |
-| 4. Disruption Monitoring | Nothing — system runs in background | Push notification: "Heavy rain detected in Koramangala. Your coverage is active." |
-| 5. Automatic Claim | Nothing — system validates and creates claim | "Validating your eligibility for rain disruption..." |
-| 6. Payout | Nothing — UPI transfer executes | "₹403 sent to your UPI — 2.8 hours of rain coverage." |
-| 7. Dashboard | Reviews policy, payout history, protection ratio | "This week, Zyro protected ₹403 of an estimated ₹680 loss." |
-
-**The worker does not file a claim. They never need to.**
-
-### From the System's Perspective
+## End-to-End System Workflow
 
 ```
-1. Onboarding + Risk Profiling (APRE-XAI)
+Step 1 — Onboarding and Risk Profiling
+  Worker completes OTP login and a short onboarding form.
+  APRE-XAI engine builds a risk profile from zone, income band, and activity history.
+  Output: recommended plan tier with a plain-language explanation.
           |
-2. Data Ingestion: environmental, traffic, telemetry, platform signals
+Step 2 — Policy Subscription
+  Worker selects plan and authorises UPI auto-debit.
+  Policy contract locked for the week: premium, hourly benefit rate,
+  weekly payout cap, and covered trigger types.
+  No mid-week changes. No post-event recalculation.
           |
-3. Parametric Trigger Decision Engine (Tri-Gate Validation)
+Step 3 — Continuous Data Ingestion
+  Environmental: IMD / OpenWeatherMap (rainfall, temperature), CPCB AQI.
+  Economic: Google Maps / HERE traffic congestion index.
+  Working-state proxy: platform order-volume signals (mocked in prototype).
+  Worker state: mobile SDK motion signals (lightweight in prototype; full SDK in production).
+  All streams ingested per H3 zone into the Trigger Decision Engine.
           |
-4. Event Generation Engine (EGM): creates FINALIZED event object
+Step 4 — Parametric Trigger Detection (Tri-Gate Validation)
+  Gate 1: Environmental threshold crossed and confirmed?
+  Gate 2: Economic impact confirmed? (order-drop proxy, congestion spike)
+  Gate 3: Disruption persistent for qualifying minimum duration?
+  Level 1 events (curfew, complete zone closure) fast-track Gate 2 by design.
+  Output: validated trigger status, per H3 zone.
           |
-5. Worker Impact Validation Engine (WIVE): confirms individual eligibility
+Step 5 — Event Object Creation (EGM)
+  Event Generation Engine creates a FINALIZED, immutable event object.
+  One active event per zone — overlapping signals merge, no duplicates.
+  Workers with active, matching policies enter the WIVE validation queue.
           |
-6. ZyroCredit: claim creation → payout calculation → payment execution
+Step 6 — Individual Worker Validation (WIVE)
+  Per-worker checks:
+    - Geospatial: was the worker in the affected H3 zone?
+    - Temporal: did their active session overlap the event window?
+    - Work state: were they in an earning-intent state, not voluntarily offline?
+    - Policy: is there an active policy covering this trigger type?
+  Output: Eligibility Object with effective_loss_ratio per worker.
           |
-7. Dashboard: updates worker view and admin analytics in near-real-time
+Step 7 — Fraud Scoring
+  Rule-layer checks: duplicate claim prevention, new-account flags, zone-visit history.
+  Anomaly scoring: lightweight isolation forest on behavioural signals.
+  Motion check: GPS vs. motion signal consistency (prototype: basic; full kinetic SDK: production).
+  Output: confidence tier per worker — High, Medium, or Review.
+          |
+Step 8 — Payout Execution (ZyroCredit)
+  High-confidence: UPI transfer executes immediately.
+  Medium-confidence: deferred 2–4 hours for secondary verification, no rejection.
+  Review lane: claim held pending manual fraud review within 24 hours.
+  Idempotency keys prevent double execution.
+  Redis retry queue handles transient payment gateway failures.
+          |
+Step 9 — Dashboard Update and Post-Event Recalibration
+  Worker dashboard: payout confirmed, protection ratio updated.
+  Admin dashboard: event log, loss ratio, fraud flag status, reserve pool draw.
+  Post-event: zone disruption probability inputs updated for next renewal cycle.
 ```
-
-Each stage has a defined input, defined processing logic, and defined output. There are no ambiguous handoffs.
 
 ---
 
-## Module 1 — Onboarding and Policy Recommendation (APRE-XAI)
+## Onboarding Flow
 
-### What the Onboarding Collects
+Onboarding is designed to complete in under two minutes on a mobile device, with no documents required upfront.
 
-Onboarding is designed to complete in under 2 minutes on mobile.
+### What the Worker Provides
 
-**Required inputs:**
-- Phone number (OTP verification)
-- Delivery platform selection (Swiggy / Zomato / other)
-- Primary operating city and zone(s)
-- Approximate daily working hours
+**Required fields:**
+- Phone number (OTP verification — no password setup)
+- Delivery platform (Swiggy, Zomato, or other)
+- Primary city and operating zone(s) — used to set the zone disruption risk profile
+- Typical daily working hours (morning / afternoon / evening / full day)
+- Estimated weekly income band (six options: < Rs. 3,000 / Rs. 3,000–5,000 / Rs. 5,000–7,000 and so on) — self-reported; not verified at onboarding
+- UPI ID for payouts
 
-**Optional but improves recommendation:**
-- Linked platform ID (for activity data enrichment)
-- Typical daily income estimate
-- Preferred disruption types to cover
+**Optional fields (improve recommendation accuracy):**
+- Linked platform partner ID (enables richer activity signal enrichment in future)
+- Preferred trigger types to cover — useful for workers who want to exclude certain event types from coverage
+- Consent to passive background motion signals (used for eligibility validation; battery-light, no continuous streaming)
 
-**What the worker does not need to provide:**
-- Bank account details (UPI ID only for payout)
-- Physical documents at onboarding (simplified KYC; full eKYC in production)
-- Income proof or employment letters
+### What the Worker Does Not Need to Provide
 
-### How Plan Recommendation Works
+At onboarding, workers are not asked for income proof, bank account statements, employer letters, or physical documents. KYC is handled via phone OTP (simplified). Full eKYC via DigiLocker / Aadhaar is planned for the production deployment.
 
-The Adaptive Policy Recommendation and Explainability Engine (APRE-XAI) uses the collected inputs to:
+### What the System Does
 
-1. Construct the worker's risk profile (income baseline, zone disruption exposure, income variability)
-2. Run the weekly premium formula (see Weekly Premium Model)
-3. Map the output to a plan tier: **Basic**, **Standard**, or **Premium**
-4. Generate a plain-language explanation the worker can read and understand
+The Adaptive Policy Recommendation and Explainability Engine (APRE-XAI) takes the onboarding inputs and:
+1. Constructs a risk profile: zone disruption probability, estimated income variability
+2. Runs the weekly premium formula
+3. Maps the output to a plan tier: Basic, Standard, or Premium
+4. Generates a plain-language explanation the worker can read on-screen
 
-**What the worker sees:**
+**Example recommendation screen:**
 
-> **Recommended: Standard Plan**  
-> Weekly Premium: ₹63 | Hourly Benefit: ₹120 | Weekly Cap: ₹600  
-> Covered: Heavy Rain, Extreme Heat, Severe Pollution, Curfews  
-> Why: You operate in rain-heavy zones with moderate income variability. This plan balances cost and protection.  
-> [Activate Standard Plan] [Compare All Plans]
-
-The worker can accept the recommendation, select a different tier, or learn more. Plan activation triggers UPI payment setup.
-
-### Policy Contract — Locked at Activation
-
-Once activated, the following are fixed for the weekly window:
-
-- Weekly premium amount
-- Hourly benefit rate
-- Coverage tier
-- Weekly payout cap
-- Covered trigger types
-
-No mid-week re-pricing. No post-event recalculation. What the worker agreed to is what governs payout.
+> **Recommended: Standard Plan**
+> Weekly Premium: Rs. 63 | Hourly Benefit: Rs. 120 | Weekly Cap: Rs. 600
+> Covered: Heavy Rain, Extreme Heat, Severe Pollution, Curfews
+> Why this plan: You operate in zones with moderate-to-high rain exposure.
+> This plan balances weekly cost and income protection.
+> [Activate — Rs. 63 auto-debited weekly] [Compare All Plans]
 
 ### Cold-Start Handling
 
-New workers with no earnings history are not rejected or given a default-minimum plan. Instead:
-- Zone-level historical disruption data and platform cohort patterns set a temporary risk profile
-- Conservative benefit values are assigned
-- The premium stays within the affordability floor
-- After 2–3 weekly cycles, the profile is refined using real activity data
+New workers with no individual history are not rejected or given a default-minimum plan. The system assigns a zone-cohort-derived risk profile based on historical disruption data for their declared zone and platform join-date cohort. Conservative benefit values are applied. After two to three weekly cycles with verified activity, the profile is refined using real signal data.
 
 ---
 
@@ -425,10 +233,9 @@ New workers with no earnings history are not rejected or given a default-minimum
 
 ### Why Weekly Pricing
 
-> [!TIP]
-> Delivery workers settle their income weekly. Their financial decisions are weekly. A monthly premium is harder to commit to, harder to absorb in a bad week, and misaligned with how they think about money. A weekly premium is small, predictable, and resets protection every 7 days.
+Delivery workers are paid weekly by their platforms. Their financial planning horizon is weekly. A monthly premium creates a larger single payment that is harder to absorb in a low-earning week and is misaligned with how workers actually think about money. A weekly premium stays small, commits the worker for only seven days at a time, and resets protection automatically each cycle.
 
-### The Premium Formula
+### Premium Formula
 
 ```
 expected_weekly_loss = weekly_income_estimate
@@ -437,251 +244,429 @@ expected_weekly_loss = weekly_income_estimate
 
 base_premium = expected_weekly_loss × replacement_fraction × loading_factor
 
-final_premium = clip(base_premium, min=₹19, max=₹149)
+final_premium = clip(base_premium, floor=Rs. 19, ceiling=Rs. 149)
 ```
 
-**Input definitions:**
+### Input Definitions
 
-| Input | Description |
-|---|---|
-| `weekly_income_estimate` | Estimated from activity data or worker input |
-| `disruption_probability` | Probability of a qualifying disruption in their zones this week |
-| `expected_hours_lost` | Historical average hours lost per disruption event in the zone |
-| `replacement_fraction` | Partial replacement cap — set at 0.65, never exceeds 0.70 |
-| `loading_factor` | Covers platform operations, reserve contribution, and fraud buffer — set at 1.4 |
-
-> [!IMPORTANT]
-> **Affordability clip:** No worker pays more than ₹149/week regardless of risk. No premium falls below ₹19 regardless of low exposure.
+| Input | Description | Source in Prototype |
+|---|---|---|
+| weekly_income_estimate | Worker-reported income band midpoint | Onboarding form |
+| disruption_probability | Estimated probability of a qualifying trigger event in their zones this week | Historical IMD, CPCB, zone event records |
+| expected_hours_lost | Average hours lost per disruption event in the zone, by event type | Zyro zone database, seeded with historical data |
+| replacement_fraction | Partial income replacement cap (0.65 base; never exceeds 0.70) | Fixed in policy contract |
+| loading_factor | Multiplier covering operating costs, reserve contribution, and reinsurance buffer | Fixed at 1.4 |
 
 ### Numerical Example
 
-A Bengaluru worker earning ₹5,000/week in a rain-heavy zone:
+A Bengaluru Standard-tier worker estimating Rs. 5,000/week, in a zone with 22% disruption probability and a historical 3.5-hour average event:
 
 ```
-expected_weekly_loss = 5000 × 0.22 × (3.5 / 56) = ₹68.75
-base_premium         = 68.75 × 0.65 × 1.4       = ₹62.56
-final_premium        = clip(62.56, 19, 149)       = ₹63/week
+expected_weekly_loss = 5,000 × 0.22 × (3.5 / 56) = Rs. 68.75
+base_premium         = 68.75 × 0.65 × 1.4         = Rs. 62.56
+final_premium        = clip(62.56, 19, 149)         = Rs. 63 / week
 ```
 
-This worker pays ₹63/week. Their maximum weekly payout is capped at ₹600 (Standard tier).
+Weekly payout cap for Standard tier: Rs. 600.
+
+### Affordability Bounds
+
+No worker pays more than Rs. 149/week regardless of zone risk. No premium falls below Rs. 19 regardless of low exposure. The ceiling keeps the product affordable for the persona. The floor prevents the reserve pool from becoming structurally underfunded at low-premium cohorts.
 
 ### Why Payout Exposure Stays Bounded
 
-Even in a city-wide disruption affecting 10,000 workers:
-- Every policy has a weekly cap — no single worker can receive more than their tier maximum
-- Partial replacement (max 70%) ensures payouts are not full income replacement
-- The loading factor in the premium funds a reserve margin above pure expected loss
-- Production deployment adds a reinsurance layer for correlated mass-disruption exposure
-
-This is not a theoretical control — it is embedded in the formula and the policy contract.
+Even during a city-scale disruption affecting thousands of workers simultaneously:
+- Every policy has a fixed weekly cap that does not increase during a surge
+- The replacement fraction (max 70%) ensures payouts are never full income replacement
+- The loading factor of 1.4 means premium revenue exceeds pure expected loss by 40%, creating a reserve margin
+- Above the stop-loss threshold, a reinsurance layer is intended to absorb excess correlated liability
 
 ---
 
-## Worker Impact Validation Engine (WIVE)
+## Parametric Trigger Framework
 
-**Most parametric insurance products would pay every worker in the disrupted zone. Zyro does not.**
+### Covered Disruption Types
 
-Zone-level disruption is a necessary but not sufficient condition for payout. A worker who was offline, asleep, or on voluntary break during the event did not lose earning opportunity. Paying them would be financially wasteful, unfair to the insurer, and architecturally wrong.
+| Category | Specific Events | Threshold | Data Source (Prototype) |
+|---|---|---|---|
+| Environmental — Rainfall | Heavy rain, urban flooding | Rainfall > 15 mm/hr, sustained | Live: OpenWeatherMap; secondary: IMD open data |
+| Environmental — Heat | Extreme heat advisory | Temperature > 43°C, sustained | Live: OpenWeatherMap |
+| Environmental — Pollution | Severe AQI | AQI > 400 (Severe band, CPCB) | Live: CPCB AQI API |
+| Social / Administrative | Curfew, bandh, zone closure, market shutdown | Government alert or confirmed mobility halt > 2 hours | Mobility proxy signal; government feed (future) |
+| Operational | Platform-level order outage in a zone | Order-volume drop > 50%, sustained | Mocked in prototype; live platform API is future-scope |
 
-WIVE is Zyro's answer to this problem. It answers a precise question:
+### Pollution Coverage: Two Cases
 
-**"Did this specific worker actually lose earning opportunity because of this specific event?"**
+AQI above 400 is CPCB's Severe band. At this threshold, CPCB recommends against outdoor physical exertion. For a two-wheeler delivery worker on an eight-hour outdoor shift, choosing not to work at AQI > 400 is a rational decision, not a voluntary absence. Zyro is designed to cover two distinct outcomes under this trigger:
 
-### Four Validation Checks
+**Case A — Worker stops for health reasons.** The worker is in-zone, policy is active, AQI threshold is confirmed and sustained. WIVE detects that the worker was active before the event and their activity dropped during it. Payout is computed for the covered hours.
 
-1. **Geospatial Presence** — Was the worker within the event's H3 zone or immediate neighboring ring during the event window?
+**Case B — Worker is present but earns nothing.** AQI > 400 depresses platform-side demand as customers avoid outdoor interactions. The worker may continue trying to work but receives few or no orders. Gate 2 (economic impact) detects the order-volume drop signal. Both the health-stoppage and the demand-collapse scenario are covered within the same trigger logic.
 
-2. **Temporal Overlap** — Did the worker's active session overlap with the event for a minimum qualifying duration? Prevents late-join exploitation and negligible-impact micro-claims.
+### Tri-Gate Validation
 
-3. **Work Intent and Activity State** — Was the worker in a valid earning state: waiting for orders or mid-delivery and disrupted? Workers who were offline by choice, on break, or inactive are excluded. Zyro covers the opportunity to work, not physical proximity.
+A threshold breach alone is not sufficient for a valid trigger. A five-minute rain spike does not meaningfully disrupt deliveries. A heat advisory at 10 PM does not affect a worker who finished their shift at 8 PM. To reduce false triggers, Zyro requires:
 
-4. **Policy Validation** — Did an active policy, covering this trigger type, exist at the time of the event?
+**Gate 1 — Environmental Detection.** The measured disruption must cross the defined threshold for its type and zone, confirmed by at least one live data feed.
 
-### Effective Loss Ratio
+**Gate 2 — Economic Impact Verification.** Proxy signals must confirm that earning opportunity was actually reduced: order-volume drop, traffic congestion index spike, delivery latency anomaly. A disruption that does not demonstrably reduce orders does not proceed to event creation.
 
-WIVE computes the overlap fraction:
+**Gate 3 — Temporal Persistence.** The disruption must sustain for a minimum qualifying duration (varies by trigger type). This prevents one-minute anomalies from becoming valid events.
 
-```
-effective_loss_ratio = qualifying_overlap_minutes / event_duration_minutes
-```
+Level 1 events (curfew, complete zone closure) fast-track Gate 2 — their economic impact is immediate and does not require proxy confirmation.
 
-A worker who was active for 60% of a 2-hour event has an effective loss ratio of 0.6. This feeds directly into the payout formula, ensuring payout is proportional to actual exposure.
+### Hysteresis on Recovery
 
-**Output:** Deterministic, auditable Eligibility Object — `eligibility_status`, `validation_flags`, `overlap_duration`, `effective_loss_ratio`. Every decision is traceable.
+The trigger engine does not close an event the moment one signal briefly dips below threshold. Recovery requires multiple signals to return to baseline simultaneously, and a minimum recovery hold time must pass before the event is marked ENDED. This prevents premature event closure and under-compensation during recoveries that briefly dip and resume.
 
-WIVE is a core innovation. Without it, Zyro would overpay and become financially unsustainable after the first major disruption event.
+### After Trigger Confirmation
 
----
-
-## Event Generation Engine (EGM)
-
-Once a trigger is validated, EGM converts it into a structured, immutable event object that serves as the system-wide reference for all downstream operations.
-
-**Why this matters:** Without a single, consistent event object, different modules could disagree on event duration, severity, or boundaries — causing inconsistent payouts, duplicate processing, and audit failures.
-
-**Event object includes:** `event_id`, `zone_h3_id`, `disruption_type`, `severity`, `status`, `confidence_score`, `signal_composition`, `event_start_ts`, `event_end_ts`, `traceability_refs`
-
-**Event lifecycle (strict state machine):**
-```
-DETECTED → ACTIVE → STALE → ENDED → FINALIZED
-```
-
-Only FINALIZED events are used for claim creation.
-
-**Design rules:**
-- One active event per zone (event locking)
-- Overlapping signals merge into one composite event — no duplicates
-- Spatial smoothing across target H3 cell and neighboring ring
-- Retroactive timestamp handling for delayed data feeds
+1. Event Generation Engine receives the validated trigger.
+2. A FINALIZED, immutable event object is created for the affected H3 zone.
+3. Zone is locked — one active event per zone; overlapping signals merge, not duplicate.
+4. All workers with active, matching policies in the zone enter the WIVE eligibility queue.
+5. Workers receive a push notification: "Disruption confirmed in your zone. Your coverage is active."
 
 ---
 
-## Fraud Detection and Anti-Spoofing
+## AI/ML Integration
 
-Parametric insurance has a structural vulnerability: the trigger is external and objective, but the worker's presence and activity state must be inferred from signals. GPS coordinates can be spoofed. Sessions can be staged.
+AI is used where rule-based logic produces unreliable outputs. Each component below lists its purpose, the features it uses, its predicted output, the prototype data source, and the reason a fixed rule is insufficient.
 
-### MVP Fraud Controls (Hackathon Prototype)
+### Premium Calculation
 
-These are implemented in the Phase 2 prototype:
+**APRE-XAI — Weekly Premium Prediction**
 
-- **Duplicate claim prevention:** `worker_id + event_id` composite key prevents double-processing
-- **Zone overlap validation:** Worker location must match event H3 zone — not just city-level
-- **Session continuity check:** Worker must have been active before the event began, not just during it
-- **New account caution:** Workers with fewer than 2 weeks of history are auto-routed to medium-confidence path
-- **Basic anomaly scoring:** Lightweight anomaly rules flag timing bursts and zone-first-appearance patterns
-- **Policy existence check:** No policy = no claim, enforced before validation begins
-
-### Advanced Anti-Spoofing (Production Layer)
-
-These are defined in architecture and demonstrated as stubs in prototype, fully built in production:
-
-| Signal | What It Detects |
+| Field | Detail |
 |---|---|
-| Kinetic heartbeat signature | Physical motion consistent with two-wheeler travel |
-| Speed-to-motion correlation | GPS speed matches inertial sensor data |
-| Device integrity flags | Device is not rooted or running location mock apps |
-| Network region consistency | IP/network region matches claimed GPS zone |
-| H3 zone history | Worker has prior visit history in this zone |
-| Spatio-temporal cluster detection | Multiple accounts from same device/network subnet claiming simultaneously |
-| Trust score evolution | Incremental ML model tracking lifetime claim reliability per worker |
+| Purpose | Predict the worker-specific weekly premium for each plan tier |
+| Input features | Declared income band, operating zone(s), historical disruption frequency for those zones, estimated working hours, platform and join-date cohort |
+| Output | Predicted expected weekly loss → mapped to a final premium within the affordability bounds |
+| Prototype data source | Synthetic worker profiles calibrated to NITI Aayog earnings ranges and IMD/CPCB zone disruption history |
+| Why not a rule | Zone disruption probability, income variability, and activity patterns are nonlinearly interdependent; a flat rate per zone misrepresents risk for workers with different schedules or multi-zone exposure |
+
+**APRE-XAI — Cold-Start Cohort Inference**
+
+| Field | Detail |
+|---|---|
+| Purpose | Assign a provisional risk profile to new workers with no individual history |
+| Input features | Operating zone, platform, join-date cohort, declared income band |
+| Output | Cohort-matched risk parameters for premium calculation |
+| Prototype data source | Cluster labels derived from synthetic worker population by zone |
+| Why not a rule | A default-minimum plan for all new workers would systematically underprice high-risk zones and overprice low-risk ones |
+
+**APRE-XAI — Plan Explainability**
+
+| Field | Detail |
+|---|---|
+| Purpose | Provide a worker-readable explanation of why their plan was recommended at this price |
+| Approach | SHAP-style feature attribution: lists the top two or three features driving the premium (e.g., "rain-heavy zone," "moderate income variability") |
+| Output | Plain-language explanation in the app recommendation screen |
+| Why needed | IRDAI draft guidelines on AI in financial products require explainability for customer-facing decisions |
+
+### Trigger Validation
+
+**Activity State Inference (in WIVE)**
+
+| Field | Detail |
+|---|---|
+| Purpose | Determine whether a worker was in an active earning state when the event occurred, when platform signals are delayed or unavailable |
+| Input features | Motion sensor readings (speed, lateral acceleration, vibration frequency), app session state, last GPS timestamp |
+| Output | Inferred activity state: active-earning, waiting-for-order, voluntarily-offline, or ambiguous |
+| Prototype data source | Simulated telemetry with injected motion profiles for active vs. stationary states |
+| Why not a rule | Platform feed latency means session data can be minutes behind real state; ML inference from motion fills this gap reliably |
+
+**Trigger Confidence Scoring**
+
+| Field | Detail |
+|---|---|
+| Purpose | Assign a confidence score to each validated trigger when sensor or API data is noisy or partially missing |
+| Input features | Rainfall value, source agreement (IMD vs. OpenWeatherMap), order-volume delta, congestion index, duration of sustained threshold breach |
+| Output | Confidence score (0–1); below a minimum threshold, event is held for human review |
+| Prototype data source | Historical API response data with injected noise to simulate sensor disagreement |
+| Why not a rule | A binary threshold produces many borderline false positives and false negatives at the edges; confidence scoring allows proportional response |
+
+### Fraud Detection
+
+**Anomaly Scoring**
+
+| Field | Detail |
+|---|---|
+| Purpose | Assign an anomaly score to each claim, supporting the confidence-tier routing decision |
+| Input features | GPS-motion consistency flag, zone visit history, new-account age, session continuity score, payout-destination repeat flag |
+| Output | Anomaly score (0–1); high score routes to Review lane |
+| Prototype data source | Rule-generated labelled examples (known-good vs. known-suspicious) for training |
+| Why not a rule | Novel spoofing patterns and low-frequency coordinated behaviour are not predictable by fixed rules |
+
+**Trust Score Evolution**
+
+| Field | Detail |
+|---|---|
+| Purpose | Track each worker's cumulative claim reliability over time; used to accelerate or restrict payout lane routing |
+| Input features | Claim outcome history, fraud flag count, anomaly score trend, session verification rate |
+| Output | Trust score (0–100); influences confidence-tier assignment for future claims |
+| Prototype scope | Simulated with seeded trust scores; live incremental updates in production |
+| Why not a rule | A fixed rule cannot track a worker's reputation trajectory or distinguish a first-time anomaly from a pattern |
+
+---
+
+## Fraud Prevention and Validation
+
+Parametric insurance has a structural vulnerability: the trigger is external and objective, but worker presence and activity state must be inferred from device signals. GPS coordinates can be mocked. Sessions can be staged.
+
+### MVP Fraud Controls (Built in Prototype)
+
+These controls are implemented in the Phase 2 prototype:
+
+| Control | What It Does |
+|---|---|
+| Duplicate claim prevention | Composite key `worker_id + event_id` prevents the same claim from being processed twice |
+| Zone overlap validation | Worker's GPS location at event time must match the event's H3 zone; city-level match is not sufficient |
+| Session continuity check | Worker must have had an active session before the event began, not only during it |
+| New account caution | Workers with fewer than two weeks of history are automatically routed to medium-confidence, regardless of other signals |
+| Policy existence gate | No valid policy covering this trigger type means no claim is created, enforced before any eligibility check runs |
+
+### Advanced Fraud Controls (Production Layer)
+
+The following controls are architecturally defined in this submission. They are partially stubbed in the prototype and targeted for full implementation in production:
+
+**Kinetic Signature Analysis**
+
+A genuine delivery partner on a two-wheeler produces a consistent accelerometer pattern: lateral sway on turns, vibration at engine frequency, correlating speed and inertial readings. A stationary phone — or a spoofing device — produces a flat or artificially regular signature. The prototype collects this signal; the classification model is trained on labelled profiles in production.
+
+| Signal | Intended Detection |
+|---|---|
+| Accelerometer pattern | Physical motion consistent with two-wheeler travel vs. stationary device |
+| GPS-to-motion correlation | GPS reported speed matched against inertial readings; divergence suggests GPS injection with no physical movement |
+| Cell tower triangulation | Network-level location independent of GPS chip; app-based location mocking cannot override cell tower placement |
+| IP / network region | IP geolocation matched against declared zone; VPN and proxy use detectable |
+| H3 zone visit history | Workers with no prior presence in a zone triggering a first-time claim in that zone are flagged for additional review |
+| Device integrity | Device rooting or active location-mock applications detected via device attestation |
+
+These signals are intended to raise the cost and complexity of coordinated spoofing. No single signal alone constitutes proof of fraud — the anomaly score increases only when multiple signals are simultaneously inconsistent.
+
+**Coordinated Fraud Ring Detection**
+
+During active disruptions, the system is designed to analyse the claim population for syndicate patterns:
+- Claim timing clustering: statistically implausible bursts of claims within a short window
+- Shared network infrastructure: multiple accounts appearing to originate from the same device or IP
+- GPS trajectory entropy: spoofed paths tend to show low entropy (perfect straight lines, repetitive arcs)
+- Payout destination clustering: multiple accounts routing to a small set of UPI IDs
+
+Streaming cluster analysis is intended to run every five minutes during events. Accounts converging on multiple suspicious dimensions simultaneously trigger a Syndicate Alert and payout freeze pending review. In the prototype, this runs as a batch scan post-event.
 
 ### Confidence-Based Payout Routing
 
 | Confidence Level | Condition | Action |
 |---|---|---|
-| High | Trust score strong, no anomaly flags | Instant payout — primary processing lane |
-| Medium | New profile, one weak anomaly, or data gap | Deferred — delayed processing lane, resolved same night |
-| Low / Suspicious | Multiple strong anomaly flags | Claim held — fraud review queue within 24 hours |
+| High | Trust score above threshold; no anomaly flags | Immediate payout — primary lane |
+| Medium | New profile, one weak anomaly, or data gap | Deferred 2–4 hours — delayed lane; no rejection |
+| Low / Suspicious | Multiple strong anomaly signals | Claim held — fraud review queue within 24 hours |
 
-**Fairness rule:** Missing data is not treated as fraud. A weak network signal during a rainstorm is expected. Anomaly score increases only when multiple independent signals are simultaneously suspicious.
-
-**Trust recovery:** Workers recover trust score through subsequent verified sessions. No permanent penalty from one ambiguous event.
+Signal degradation during bad weather (weak GPS, dropped network) is treated as expected, not suspicious. Anomaly score increases only when multiple independent signals are simultaneously inconsistent with genuine outdoor work activity.
 
 ---
 
-## Analytics Dashboard
+## Payout Logic
 
-### Worker Dashboard — "Saved vs Lost" View
+### Payout Formula
 
-The worker dashboard shows one primary thing: is this policy actually helping me?
+Once a worker passes WIVE eligibility checks:
+
+```
+payout = hourly_benefit_rate
+         × effective_hours_affected
+         × severity_factor
+         × trust_multiplier
+
+effective_hours_affected = event_duration_hours × effective_loss_ratio
+```
+
+Where `effective_loss_ratio` is the fraction of the event window during which the worker was confirmed active:
+
+```
+effective_loss_ratio = qualifying_overlap_minutes / event_duration_minutes
+```
+
+### Payout Bounds
+
+- Payout is capped at the weekly maximum for the worker's plan tier
+- Maximum payout per event: Basic Rs. 300 / Standard Rs. 600 / Premium Rs. 900
+- Partial replacement fraction is enforced (max 70% income replacement) — not overridden during surge conditions
+- Trust multiplier adjusts between 0.85 and 1.0 based on trust score, not below 0.85
+
+### Example Calculation
+
+Ramesh — Standard tier, trust score 87, 2.8 hours confirmed in a rain event, severity factor 1.2:
+
+```
+payout = 120 × 2.8 × 1.2 × 1.0 = Rs. 403.20
+```
+
+Capped at Rs. 600 for Standard tier. Rs. 403 is below cap. UPI transfer executes.
+
+### Execution Architecture
+
+Payouts are submitted to Razorpay Payouts in batches of 200 workers. Each claim carries an idempotency key (`worker_id + event_id + week_id`) to prevent double execution on retry. A Redis retry queue handles transient payment gateway failures. In prototype mode, Razorpay test mode is used — no live money is transferred.
+
+---
+
+## Risk Governance and Force Majeure
+
+### Explicit Exclusions
+
+| Excluded Category | Reason |
+|---|---|
+| War and armed conflict | Duration-indefinite; no objective pre-event signal exists; zone boundaries are legally contested and geographically unpredictable |
+| Pandemics and public health emergencies | Simultaneous correlated impact across all zones; sustained indefinitely; parametric premium pricing cannot sustain universal correlated payouts |
+| Terrorism and civil unrest | Instantaneous onset with no environmental data stream capable of generating a pre-event signal; post-event zone definition is ambiguous |
+| Health, life, and accident | Zyro covers only income loss from external, environmental disruptions; personal health events require different underwriting models entirely |
+| Vehicle damage | Physical asset damage requires an inspection-based assessment; parametric trigger logic is not a substitute for loss verification of a physical claim |
+
+### Why These Exclusions Exist in the Design
+
+Parametric insurance is feasible when the trigger is: (a) objective, (b) externally verifiable from a data feed, and (c) bounded in time and space. War, pandemics, and terrorism fail all three simultaneously. There is no threshold that can be set in advance and no data stream that can supply a pre-event signal.
+
+Covering these events in a weekly, affordable product would require loss-ratio assumptions that cannot be sustained at Zyro's price points — and would expose the entire reserve pool to unlimited correlated liability.
+
+### Reinsurance Architecture (Production Target)
+
+**Layer 1 — Internal Reserve.** The loading factor of 1.4 in the premium formula means premium revenue is 1.4× the modelled expected loss. The surplus 0.4× accumulates as the reserve pool. This reserve is intended to absorb normal-week and moderate-disruption payouts without external support.
+
+**Layer 2 — Parametric Reinsurance (planned for production).** When aggregate weekly payouts for a cohort exceed the stop-loss threshold — defined as 140% of that week's collected premium for that cohort — a parametric reinsurance treaty is designed to activate. The treaty itself is parametric: triggered by the verified aggregate payout metric, not by individual claims.
+
+The stop-loss threshold of 140% is the point at which the reserve pool alone cannot sustain the payout obligation, corresponding to a correlated multi-zone disruption event affecting a large fraction of the covered worker population simultaneously.
+
+In the hackathon prototype, the reserve pool and stop-loss threshold are simulated using the premium model parameters. No live reinsurance contract is in place.
+
+---
+
+## Financial Resilience Model
+
+The table below shows how the system responds under different disruption intensities. Numbers assume a cohort of 10,000 active Standard-tier policies at an average premium of Rs. 63/week (total weekly premium pool: Rs. 6.3 lakh), and an average payout of Rs. 340 per eligible claim.
+
+| Scenario | Claim Rate | Estimated Weekly Payout | Payout as % of Premium Pool | Reserve Impact | Reinsurance |
+|---|---|---|---|---|---|
+| Normal week | 3–5% (300–500 workers) | Rs. 1.0–1.7 lakh | 16–27% | Not drawn | Not triggered |
+| Monsoon surge | 12–18% (1,200–1,800 workers) | Rs. 4.1–6.1 lakh | 65–97% | Partially drawn | Not triggered |
+| Extreme event | 25–35% (2,500–3,500 workers) | Rs. 8.5–11.9 lakh | 135–189% | Fully drawn at 140% mark | Triggers above 140% |
+| Catastrophic week | > 40% (4,000+ workers) | > Rs. 13.6 lakh | > 215% | Exhausted | Fully absorbs excess above stop-loss |
+
+**Reserve pool logic:** The reserve is funded by the loading factor surplus (0.4× of each premium). For a 10,000-worker cohort at Rs. 63/week, this is approximately Rs. 2.52 lakh per week carried forward as operating reserve. The stop-loss activates at 140% of the weekly premium pool (Rs. 8.82 lakh in this cohort), at which point the reinsurance treaty is triggered to cover the excess.
+
+This is a planning model, not a live actuarial study. In production, these parameters would be calibrated against real historical loss data before any treaty is negotiated.
+
+---
+
+## Crisis / Market-Shift Scenario
+
+This section walks through how the Zyro system is designed to handle a sudden city-scale disruption generating thousands of simultaneous claims, with fraud risk and financial exposure both elevated.
+
+### The Scenario
+
+**7:00 PM on a Friday in a major Indian metro.** Flash flooding begins simultaneously across three H3 zone clusters. Approximately 2,400 delivery workers with active Zyro policies are working in those zones. This is peak earning time and peak claim-volume risk simultaneously.
+
+### System Response Timeline
+
+| Time | System Action |
+|---|---|
+| T+0 min | Rainfall crosses 15 mm/hr. IMD feed and OpenWeatherMap both confirm. Traffic congestion index spikes. Order-volume proxy shows a 55% drop. All three signals ingested simultaneously. |
+| T+8 min | Gate 3 persistence confirmed across all three zones — sustained beyond the minimum qualifying duration. Three validated trigger statuses produced. |
+| T+9 min | EGM creates three FINALIZED event objects. Zone locks placed. Overlapping signals within sub-zones merged into the parent event — no duplicate processing. |
+| T+10 min | 2,400 workers enter WIVE validation queue. WIVE processes per-worker checks across a stateless compute pool. |
+| T+14 min | WIVE completes. 1,847 workers are eligible; 553 excluded (offline, past policy expiry, no confirmed zone overlap, or voluntarily inactive). |
+| T+15 min | Fraud scoring runs on all 1,847 eligible workers. Crisis mode activates: new accounts (< 2 weeks old) are automatically routed to medium-confidence. High-trust workers (trust score > 80) process without additional holds. |
+| T+15–42 min | Primary lane: approximately 1,214 high-confidence workers. Payouts execute in batches of 200 with idempotency key enforcement. |
+| T+42–75 min | Delayed lane: approximately 610 medium-confidence workers. Secondary verification resolves; payouts execute for confirmed cases. |
+| T+75 min | Review queue: approximately 23 workers flagged for anomaly. Claims held; fraud review within 24 hours. |
+
+### Financial Position in This Scenario
+
+Using the 10,000-worker Standard-tier cohort model from the Financial Resilience section:
+
+| Parameter | Value |
+|---|---|
+| Eligible workers | 1,847 |
+| Average payout per eligible worker | Rs. 340 (estimated) |
+| Total payout required | Rs. 6.28 lakh |
+| Weekly premium pool for this cohort | Rs. 6.3 lakh |
+| Payout as % of premium pool | ~100% |
+| Stop-loss threshold (140% of Rs. 6.3 lakh) | Rs. 8.82 lakh |
+| Reserve draw required | Minimal — payout is within the weekly premium pool |
+| Reinsurance trigger | Not activated in this scenario |
+
+In this scenario, the weekly premium pool alone is sufficient. No stop-loss trigger, no reserve draw beyond operating buffer. If the event had affected approximately 2,600+ eligible workers at the same average payout, the 140% threshold would have been crossed and reinsurance would have been triggered.
+
+### Fraud Controls During Surge
+
+A mass disruption event is the highest-value fraud opportunity: legitimate claims provide cover for coordinated fraudulent ones.
+
+Crisis-mode fraud response (designed to activate automatically when claim volume exceeds 3× the baseline for the zone):
+- Confidence thresholds tighten: borderline signals escalated to medium-confidence
+- New accounts (< 2 weeks old) route to medium-confidence automatically
+- Spatio-temporal cluster detection scans run every 5 minutes during the event
+- High-trust workers (trust score > 80) continue through the primary lane without additional holds
+
+### Worker Experience During Crisis
+
+Push notification within minutes of event FINALIZED. App status flow: "Detected → Validating → Processing → Paid." No action required from the worker. If routed to the delayed lane: "We're verifying your eligibility — payout expected within 4 hours." Payout notification includes event type and amount when complete.
+
+### Admin Experience During Crisis
+
+Live H3 heatmap across affected zones. Event confidence scores, affected worker counts, and per-zone validation progress. Fraud alert panel with cluster detection results and escalation queue. Reserve pool exposure tracker showing running payout total vs. stop-loss proximity. Lane distribution showing percentage of claims in primary, delayed, and review. System health indicators: API availability, processing latency, queue depth.
+
+---
+
+## Dashboard Views
+
+### Worker Dashboard
 
 | View | Content |
 |---|---|
-| Active policy | Plan, covered triggers, weekly cap remaining |
-| This week's disruptions | Events in their zones, status (covered / not covered) |
-| Payout history | Amount, event, transfer status, trigger type |
-| Income protected | Total payout received across all policy weeks |
-| Protection ratio | `payout / estimated_income_loss` — displayed as a percentage |
-| Uncovered loss (honest) | Amount not covered due to cap or partial replacement — shown transparently |
-| Next renewal | Date and auto-debit amount |
+| Active policy | Plan tier, covered trigger types, weekly cap and amount remaining |
+| This week's disruptions | Events in their zones; status (covered / not covered / pending) |
+| Payout history | Amount, event type, transfer status, date |
+| Income protected | Cumulative payout received across all active policy weeks |
+| Protection ratio | Payout divided by estimated income loss — shown as a percentage |
+| Uncovered loss | Amount not covered due to cap or partial replacement — shown transparently |
+| Next renewal | Date, auto-debit amount, option to change tier |
 
-**Example worker summary:**
+Example: "This week, heavy rain in your zone caused an estimated Rs. 680 in income loss. Zyro covered Rs. 403. Your remaining Rs. 277 was not covered under your Standard plan's weekly cap. Upgrade to Premium to increase your weekly cap."
 
-> "This week, heavy rain in your zone caused an estimated ₹680 in income loss. Zyro covered ₹403. Your remaining ₹277 was not covered due to your Standard plan's weekly cap. Renew your plan to stay protected next week."
-
-The honesty of showing uncovered loss is intentional — it builds worker trust and motivates appropriate plan upgrades.
+Showing uncovered loss honestly is a deliberate design choice. It builds trust and gives the worker accurate information for plan-tier decisions at renewal.
 
 ### Insurer / Admin Dashboard
 
 | Metric | Description |
 |---|---|
 | Active policies | Count, tier distribution, weekly renewal rate |
-| Live disruption map | H3 heatmap of active events, severity, affected worker count |
-| Trigger activity | Trigger-wise claim volume, approval rate, average payout |
-| Payout-to-premium ratio | Loss ratio per zone, per event, per period |
-| Fraud alert panel | Active anomaly flags, cluster detections, escalation queue |
-| Confidence tier distribution | % of claims in high / medium / low lane |
-| Zone risk trends | Historical and projected disruption probability per zone |
-| System health | API availability, degraded mode flag, processing latency |
-
-During a crisis event, all of these metrics update in near-real-time, giving insurers full operational visibility.
-
----
-
-## Why Zyro Can Actually Be Built
-
-This is a prototypable system, not a theoretical architecture.
-
-**What makes it buildable now:**
-- Weather, pollution, and traffic APIs are publicly available (OpenWeatherMap, IMD open data, Google Maps, HERE Traffic)
-- Razorpay test mode supports mock UPI payout flows without regulatory approval
-- H3 is an open-source library (Uber) with Python, JavaScript, and PostGIS integrations
-- XGBoost and Isolation Forest are standard ML frameworks with well-documented documentation
-- React Native handles both iOS and Android from a single mobile codebase
-- FastAPI supports rapid iteration for ML-serving microservices
-- PostgreSQL + PostGIS handles geospatial data without specialized infrastructure
-
-**What is simulated in the prototype:**
-- Platform activity feed: mock event generator producing active session and order-availability signals
-- Mobile telemetry: simulated heartbeat and motion signals (full mobile SDK in production)
-- KYC: simplified identity capture form (DigiLocker eKYC in production)
-
-**What the prototype can credibly demonstrate without production-level integrations:**
-- Complete onboarding and plan recommendation flow
-- Live trigger detection with real weather and traffic APIs
-- End-to-end claim pipeline using simulated worker + mock event data
-- Payout simulation via Razorpay test mode
-- Worker and admin dashboards rendering live data from the pipeline
-
-Every production-stage component has a defined mock equivalent in the prototype. The architecture is the same; the data sources are simulated where necessary.
+| Live disruption map | H3 heatmap of active events with severity and affected worker count |
+| Trigger activity | Per-trigger claim volume, approval rate, average payout |
+| Loss ratio | Payout-to-premium ratio per zone, event, and period |
+| Fraud alert panel | Anomaly flags, cluster detection results, escalation queue |
+| Confidence tier distribution | Percentage of claims in each lane |
+| Reserve pool tracker | Running payout total, stop-loss proximity indicator |
+| Zone risk trends | Historical and modelled disruption probability per zone |
+| System health | API availability, degraded-mode status, processing latency |
 
 ---
 
-## What We Will Demonstrate in the Hackathon Prototype
+## Platform Choice
 
-| Capability | Status |
-|---|---|
-| Mobile onboarding (OTP + AI plan recommendation) | Built in Phase 2 |
-| Weekly policy creation and UPI activation | Built in Phase 2 |
-| Live weather + traffic trigger monitoring | Live API integration in Phase 2 |
-| Tri-Gate parametric trigger engine | Built in Phase 2 |
-| Mock platform activity feed | Simulated in Phase 2 |
-| Worker Impact Validation Engine (WIVE) | Built in Phase 2 |
-| Event Generation Engine with lifecycle | Built in Phase 2 |
-| Claim creation with idempotency | Built in Phase 2 |
-| Payout simulation (Razorpay test mode) | Integrated in Phase 2 |
-| Worker "Saved vs Lost" dashboard | Built in Phase 3 |
-| Admin disruption heatmap and fraud panel | Built in Phase 3 |
-| Crisis surge simulation (scripted scenario) | Demonstrated in Phase 3 |
-| Basic fraud anomaly scoring | Built in Phase 3 |
-| XGBoost-based premium recommendation | Built in Phase 2 |
+### Worker-Facing: Mobile Application
 
----
+A delivery partner on a two-wheeler in rain does not use a laptop or a web browser. The work context is a phone on a weak mobile connection in outdoor conditions. The worker product is mobile by necessity, not by design preference.
 
-## Integrations Architecture
+Mobile-specific capabilities:
+- OTP login — no password to forget, no recovery flow to navigate
+- Plan activation via UPI auto-debit — no bank form or NEFT details required
+- Push notifications when a disruption is detected in their zone
+- Payout confirmation on the lock screen
+- Background telemetry for eligibility validation — passive, battery-conscious, on by default with consent at onboarding
 
-| Integration | Pipeline Stage | What It Powers | MVP Status |
-|---|---|---|---|
-| OpenWeatherMap / IMD | Stage 2 — Ingestion | Rainfall, heat threshold for Gate 1 | Live API (MVP) |
-| CPCB AQI API | Stage 2 — Ingestion | Pollution threshold for Gate 1 | Live API (MVP) |
-| Google Maps / HERE Traffic | Stage 2 — Ingestion | Congestion index for Gate 2 | Live API (MVP) |
-| Mobile SDK telemetry | Stage 2 — Ingestion | Kinetic heartbeat, device data for fraud + WIVE | Simulated in MVP |
-| Platform activity feed | Stage 2 — Ingestion | Order availability, active session for Gate 2 | Mock generator (MVP) |
-| H3 Spatial Library | Stages 2–5 | Zone precision, event boundaries, fraud clustering | Fully implemented |
-| Razorpay (test mode) | Stage 6 — ZyroCredit | UPI payout, bank transfer execution | Test mode (MVP) |
-| Firebase Cloud Messaging | Post-payout | Push notifications for disruption + payout | Integrated in prototype |
-| DigiLocker / Aadhaar eKYC | Stage 1 — Onboarding | Identity verification | Production only |
-| Redis | Stages 5–6 | Idempotency keys, retry state, claim deduplication | Fully implemented |
+### Insurer-Facing: Web Dashboard
+
+Insurer analytics, risk oversight, fraud monitoring, and compliance audit are desktop-scale tasks. A web dashboard is the appropriate interface. This is not a cost simplification — it is the correct UX architecture for the two distinct audiences.
 
 ---
 
@@ -689,90 +674,155 @@ Every production-stage component has a defined mock equivalent in the prototype.
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| Mobile app | React Native | Cross-platform (iOS + Android), single codebase, fast development |
-| Backend services | FastAPI (Python) | ML model serving, data processing; async performance |
-| Event services | Node.js / Fastify | High-throughput event ingestion and payout orchestration |
+| Mobile app | React Native | Cross-platform iOS and Android from a single codebase; handles background telemetry and push notifications |
+| Backend — ML services | FastAPI (Python) | ML model serving, data processing, async performance |
+| Backend — Event services | Node.js / Fastify | High-throughput event ingestion and payout orchestration |
 | Primary database | PostgreSQL + PostGIS | Structured records, geospatial queries, policy and claim storage |
-| Document store | MongoDB | Flexible EGM event documents, audit logs |
-| Cache / Queue | Redis | Idempotency keys, retry queues, telemetry buffer, real-time state |
-| Geospatial indexing | Uber H3 | Hexagonal zone logic at resolution 8–9 (~85–450m precision) |
-| ML — Premium / Fraud | XGBoost, Isolation Forest | Premium prediction, anomaly scoring; well-validated in fintech |
-| ML — Clustering | DBSCAN | Spatio-temporal fraud cluster detection |
-| Explainability | SHAP-style attribution | Policy recommendation transparency for workers and regulators |
-| Payment | Razorpay (test/production) | UPI payout, bank transfer — India-native, widely integrated |
-| Push notifications | Firebase Cloud Messaging | Real-time worker alerts and payout confirmations |
-| Weather | OpenWeatherMap, IMD | Gate 1 environmental threshold detection |
-| Pollution | CPCB AQI API | Gate 1 pollution threshold |
-| Traffic | Google Maps Platform, HERE | Gate 2 economic impact verification |
-| Async scaling | Kafka-compatible (production) | Redis queue for MVP; Kafka for multi-city production scale |
+| Document store | MongoDB | Flexible EGM event objects and audit trail logs |
+| Cache and queue | Redis | Idempotency keys, retry queues, telemetry buffer, real-time state management |
+| Geospatial indexing | Uber H3 | Hexagonal zone logic at resolution 8–9 (~85–450 m precision); open-source |
+| ML — Premium and anomaly | XGBoost, Isolation Forest | Premium prediction and anomaly scoring; both are well-documented and applicable in fintech |
+| ML — Cluster fraud | DBSCAN | Spatio-temporal fraud pattern detection across claim populations |
+| Explainability | SHAP-style attribution | Feature contribution output for plan recommendation, regulatory alignment |
+| Payment gateway | Razorpay | UPI payout and bank transfer; test mode used in prototype |
+| Push notifications | Firebase Cloud Messaging | Worker alerts and payout confirmations |
+| Weather API | OpenWeatherMap, IMD open data | Gate 1 rainfall and temperature threshold detection |
+| Pollution API | CPCB AQI API | Gate 1 AQI threshold detection |
+| Traffic API | Google Maps Platform / HERE | Gate 2 economic impact via congestion index |
+| Async scaling | Redis queue (prototype); Kafka (production) | Redis handles hackathon-scale throughput; Kafka is the production path for multi-city volume |
 
 ---
 
-## MVP vs Production Feasibility
+## MVP vs. Advanced Architecture
 
-| Component | MVP (Hackathon Prototype) | Production |
+| Module | MVP / Hackathon Prototype | Advanced / Production Extension |
 |---|---|---|
-| Platform activity feed | Mock event generator | Negotiated delivery platform API or third-party data broker |
-| Payment execution | Razorpay test mode, mock UPI | Live Razorpay Payouts, Cashfree Payouts |
-| Worker telemetry | Simulated heartbeat and motion signals | Full mobile SDK with passive background collection |
-| KYC / Identity | Simplified form with phone OTP | DigiLocker / Aadhaar-based eKYC |
-| ML models | Trained on synthetic or open historical data | Retrained on live worker and claim data |
-| Reinsurance | Reserve pool simulated as fixed fraction | Parametric reinsurance contract with defined exposure triggers |
-| Scale | Single-city scenario | Multi-city, horizontally scaled microservices |
-| Compliance | Architecture documented, IRDAI sandbox path identified | IRDAI regulatory sandbox application |
+| Onboarding | OTP login, 6-field form, XGBoost plan recommendation on synthetic data | DigiLocker / Aadhaar eKYC; platform partner ID enrichment |
+| Premium model | Formula-based with calibrated synthetic data | Retrained on real worker and claim history; dynamic seasonal adjustment |
+| Weather trigger | Live OpenWeatherMap + IMD AQI API integration | Multi-source ensemble; sub-zone micro-weather stations |
+| Social / admin trigger | Mobility proxy signal (traffic drop) | Government emergency alert feed integration |
+| Platform order signal | Mock generator producing order-volume proxy | Negotiated Swiggy / Zomato API or third-party data broker |
+| WIVE | Core eligibility logic: zone overlap, session continuity, policy check | Activity-state ML classifier; full platform feed integration |
+| Fraud — kinetic | Basic motion signal collection; rule-layer anomaly scoring | Trained kinetic signature classifier on labelled device profiles |
+| Fraud — clusters | Post-event batch scan for syndicate patterns | Streaming cluster analysis every 5 minutes during live events |
+| Trust score | Seeded static scores for demo; incremental rule-based update | Gradient-boosted model retrained on live claim history |
+| Payout execution | Razorpay test mode; simulated UPI transfers | Live Razorpay Payouts or Cashfree Payouts |
+| Worker dashboard | Core views: payout history, protection ratio | Full "Saved vs. Lost" analytics, renewal nudges, plan upgrade recommendations |
+| Admin dashboard | Static event log and claim summary | Live H3 heatmap, real-time reserve tracker, fraud escalation queue |
+| Reinsurance | Configuration parameter; simulated reserve model | Live parametric reinsurance treaty with external reinsurer |
+| Compliance | Architecture documented; IRDAI path identified | Full IRDAI Regulatory Sandbox application |
+| Scaling | Single-city, Redis queue | Multi-city Kafka streaming, horizontal microservice scaling |
 
 ---
 
-## Development Roadmap
+## Development Plan
 
-**Phase 1 — Foundation (Current)**
-- Complete system architecture across all six modules
-- Persona research and product strategy
-- Weekly premium formula with numerical validation
-- Tri-Gate trigger framework definition
-- Fraud detection architecture — MVP and advanced layers
-- Crisis handling scenario design
-- README and concept documentation
+### Phase 1 — Foundation (Current)
 
-**Phase 2 — Core Prototype**
-- React Native mobile app: onboarding, plan recommendation, policy activation
-- APRE-XAI engine: XGBoost premium prediction + SHAP explainability
-- Data ingestion: live weather, traffic, and AQI APIs
-- Trigger engine: Tri-Gate validation with mock platform feed
-- EGM: event lifecycle management
-- WIVE: worker eligibility validation logic
-- ZyroCredit: claim creation + Razorpay test-mode payout
-- Basic fraud controls: deduplication, zone validation, session continuity
+- Complete system architecture across all modules documented in this README
+- Persona research with financial profile modelling and data source citations
+- Weekly premium formula defined with numerical validation
+- Tri-Gate trigger framework designed and documented
+- Fraud detection architecture defined: MVP controls and production-layer controls
+- Risk governance, force majeure exclusions, and reinsurance structure defined
+- Crisis handling scenario designed with consistent financial modelling
+- Problem statement compliance mapped
 
-**Phase 3 — Execution and Showcase**
-- Advanced fraud detection: Isolation Forest anomaly scoring, trust score model
-- Worker dashboard: Saved vs Lost view, payout history
-- Insurer admin dashboard: disruption heatmap, fraud panel, loss ratio
-- Crisis surge simulation: scripted flood scenario with live pipeline
-- Load testing and end-to-end demo with real APIs
+### Phase 2 — Core Prototype (In Progress)
 
----
+- React Native mobile app: onboarding form, APRE-XAI plan recommendation, policy activation
+- APRE-XAI engine: XGBoost premium prediction trained on synthetic worker profiles; SHAP-style explanation output
+- Live data ingestion: OpenWeatherMap, CPCB AQI API, Google Maps traffic index
+- Trigger Decision Engine: Tri-Gate validation using live environmental APIs and mock platform feed
+- Event Generation Engine: event lifecycle management with zone locking
+- WIVE: eligibility logic — zone overlap, session continuity, policy validation
+- ZyroCredit: claim creation with idempotency keys, Razorpay test-mode payout
+- MVP fraud controls: duplicate prevention, zone validation, session continuity, new-account routing
 
-## Compliance and Auditability
+### Phase 3 — Showcase and Hardening
 
-Zyro is designed with regulatory readiness as an explicit architectural property:
-
-- Every claim decision traces to source signals, policy parameters, WIVE validation outputs, and ZyroCredit execution — fully auditable
-- Policy values are locked at activation and cannot be changed mid-week
-- WIVE eligibility objects are immutable records
-- APRE-XAI recommendations include human-readable explanations aligned with draft IRDAI AI/ML guidelines for customer-facing financial decisions
-- Production path includes an IRDAI Insurance Regulatory Sandbox application for parametric income protection
+- Advanced fraud: Isolation Forest anomaly scoring, DBSCAN post-event cluster scan, seeded trust scores
+- Worker dashboard: protection ratio view, payout history, uncovered loss display
+- Admin dashboard: event log, claim summary, confidence tier distribution
+- Crisis surge simulation: scripted multi-zone flood scenario with live pipeline, demonstrating lane routing
+- End-to-end demo: real API data with synthetic worker population, Razorpay test-mode payouts
 
 ---
 
-## Final Positioning
+## Problem Statement Compliance
 
-Zyro is not another weather insurance concept. It is a complete, architecturally coherent parametric income protection system, built around three insights that most insurance products never address for gig workers:
+| Requirement | Zyro's Response |
+|---|---|
+| Single delivery partner sub-category | Food delivery partners on Swiggy and Zomato — two-wheeler, urban India |
+| Coverage: income loss only | Zyro covers only loss of earning opportunity from verified external disruptions |
+| Excluded: health, life, accidents, vehicle | Explicitly excluded with documented rationale; architecturally enforced |
+| Weekly pricing model | Premium calculated, locked, and renewed every 7 days; aligned to platform settlement cycles |
+| AI-powered risk assessment | APRE-XAI: XGBoost premium prediction, SHAP-style explainability, cold-start cohort inference |
+| Intelligent fraud detection | Kinetic signature signals, multi-signal anomaly scoring, DBSCAN cluster detection, trust score evolution |
+| Parametric automation | External data triggers claim processing automatically — no manual filing required from the worker |
+| Integration capabilities | IMD, OpenWeatherMap, CPCB AQI, Google Maps / HERE, Razorpay, Firebase Cloud Messaging |
+| Optimised onboarding | OTP login and plan recommendation designed to complete in under 2 minutes on mobile |
+| Policy creation with weekly pricing | Locked weekly contract: premium, hourly benefit, weekly cap, covered trigger types |
+| Claim triggering through parametric events | Tri-Gate validation → EGM event creation → WIVE eligibility → ZyroCredit payout |
+| Payout processing | Deterministic, idempotent UPI transfer via Razorpay; targeting under 90 minutes for high-confidence claims |
+| Analytics dashboard | Worker "saved vs. lost" view and admin disruption heatmap, fraud panel, reserve tracker |
+| Crisis / market-shift scenario | Section present with timestamped surge response, lane routing, financial controls, and reinsurance logic |
 
-**First:** Claims must be automatic because a delivery worker mid-shift cannot file paperwork. The trigger, the validation, and the payout must all happen without any worker action.
+---
 
-**Second:** Triggers must be hyperlocal. A rain event in one zone is not equivalent to a rain event in a neighboring zone, and zone-level eligibility never justifies paying every worker within a broad radius. WIVE validates individual impact — not aggregate presence.
+## Key Differentiators
 
-**Third:** Payout exposure must be structurally bounded. When 2,000 workers claim in the same 75-minute window, the system must remain financially viable. Weekly caps, partial replacement, loading factors, and reinsurance framing are not afterthoughts — they are embedded in the product's mathematical foundation.
+| Differentiator | Why It Matters |
+|---|---|
+| Worker Impact Validation Engine (WIVE) | Designed to pay workers who were actually active and affected — not everyone in the zone. Prevents overcompensation. Most parametric products do not implement this layer. |
+| Tri-Gate Trigger Validation | Requires environmental confirmation, economic impact verification, and temporal persistence before any event is valid. Designed to reduce false triggers from transient noise. |
+| Confidence-Tiered Payout Lanes | High-trust workers receive immediate payouts. Questionable claims are quarantined, not rejected. Workers are not penalised for signal degradation during bad weather. |
+| Kinetic Signature Fraud Signal | Accelerometer and motion patterns are used as an additional fraud signal — devices in motion consistent with two-wheeler travel behave differently from stationary or spoofed devices. |
+| Pollution as Health-Based Work Stoppage | Covers both the worker who stops working for health reasons and the worker who continues but earns nothing due to demand collapse — two distinct outcomes under the same trigger. |
+| Reinsurance with Defined Stop-Loss | The financial architecture for correlated mass-disruption events is defined in advance. The system does not become financially undefined under surge conditions. |
+| Explicit Force Majeure Exclusions | War, pandemics, and terrorism are excluded with documented reasoning, not left as vague policy language for adjuster discretion. |
+| Degraded-Mode Resilience | The ingestion layer is designed to continue functioning when external APIs fail — the highest-risk time for correct operation. |
+| H3 Hyperlocal Zone Logic | Neighbourhood-scale precision. A disruption 2 km away does not trigger payouts in an unaffected zone. |
+| Policy-to-Payout Consistency | The terms agreed at onboarding govern the payout calculation exactly. No post-event re-pricing, no mid-week changes. |
 
-Zyro is prototype-ready, implementation-phased, and production-legible. The architecture is credible for a hackathon demo and coherent as a long-term regulated product. The worker it is built for earns weekly, moves fast, and cannot wait for traditional insurance to catch up. Zyro was designed specifically so they do not have to.
+---
+
+## Future Scope
+
+### Near-Term Production Extensions
+
+- Direct Swiggy / Zomato platform API integration for live order-volume and session signals (replaces mock generator)
+- Full passive background motion SDK replacing simulated telemetry
+- DigiLocker / Aadhaar eKYC integrated at onboarding
+- Multi-city horizontal scaling with Kafka event streaming
+- IRDAI Regulatory Sandbox application for parametric income protection product category
+
+### Medium-Term
+
+- Auto-rickshaw and e-rickshaw as a separate sub-category with distinct event profiles (longer route exposure, different speed patterns)
+- Sub-IMD-grid micro-weather zoning using community weather station data for higher precision
+- Dynamic reinsurance treaty with parameters calibrated annually from live loss data
+- Premium personalisation based on real platform activity patterns (with worker consent)
+
+### Longer-Term
+
+- Platform-embedded coverage: Swiggy / Zomato native in-app policy flow, removing the separate Zyro app for onboarded workers
+- Micro-loan integration: automatic EMI buffer payment triggered alongside income protection payout during extended disruptions
+- Cross-platform policy portability: worker coverage history is preserved when switching between platforms
+- Rural last-mile extension: adapting the trigger and zone model for lower-density delivery zones with different disruption profiles
+
+---
+
+## Closing Summary
+
+Zyro applies parametric insurance logic to a problem that traditional insurance has never addressed adequately: a delivery partner who loses income the moment a disruption hits, cannot file a claim mid-shift, and cannot wait two weeks for resolution.
+
+The architecture is built around three design decisions that differentiate it from generic parametric concepts:
+
+**Individual validation, not zone-level.** WIVE checks whether each specific worker was active and affected — not whether a disruption occurred in a broad area. This prevents overcompensation and makes the system financially sustainable.
+
+**Bounded financial exposure.** Weekly caps, partial replacement limits, a loading-factor reserve, and a defined stop-loss threshold mean the system's financial behaviour under mass-disruption events is predictable and does not become undefined under crisis conditions.
+
+**Prototype-realistic architecture.** Every component in this submission has a defined MVP equivalent. Live weather and AQI APIs are already integrated. Platform signals are mocked but replaceable. Razorpay test mode supports end-to-end payout demonstration without a live insurance licence.
+
+The worker Zyro is built for earns weekly, works from a phone, and cannot wait for traditional insurance to catch up. The system is designed so they do not have to.
