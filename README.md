@@ -2,7 +2,7 @@
 
 # Zyro
 
-**Parametric income protection for food delivery partners — weekly-priced, trigger-driven, designed for automatic payout without the worker filing anything.**
+**Parametric income protection for food delivery partners - weekly-priced, trigger-driven, designed for automatic payout without the worker filing anything.**
 
 > Zyro is a Phase 1 hackathon concept and architecture submission for Guidewire DEVTrails 2026.
 > A working prototype is under active development. Sections labelled *Advanced / Production* are architecture-defined but not yet implemented.
@@ -67,7 +67,7 @@ Zyro is designed to address this gap with a parametric approach: the trigger is 
 
 ### Why a Single Disruption Creates Cascading Risk
 
-A three-hour rain disruption on a peak evening removes Rs. 300–500 from the weekly settlement. For a worker whose fixed obligations consume Rs. 5,000–10,000 per month, and whose liquid buffer is near zero, this is not a manageable setback. A single disruption can lead to a missed smartphone EMI payment, which triggers a late fee, which compounds into a micro-loan default the following week. There is no HR desk to advance salary. There is no employer to absorb the gap.
+A three-hour rain disruption on a peak evening removes Rs. 300-500 from the weekly settlement. For a worker whose fixed obligations consume Rs. 5,000-10,000 per month, and whose liquid buffer is near zero, this is not a manageable setback. A single disruption can lead to a missed smartphone EMI payment, which triggers a late fee, which compounds into a micro-loan default the following week. There is no HR desk to advance salary. There is no employer to absorb the gap.
 
 ### Income Risk: Delivery Worker vs. Salaried Employee
 
@@ -78,13 +78,13 @@ A three-hour rain disruption on a peak evening removes Rs. 300–500 from the we
 | Financial safety net | None to minimal | EPF, ESI, group insurance |
 | Ability to file an insurance claim mid-disruption | Practically impossible | Standard HR process |
 | Time to receive any compensation | Weeks to never, under traditional insurance | Often immediate |
-| Estimated disruption days per monsoon month | 4–6 | Rare |
+| Estimated disruption days per monsoon month | 4-6 | Rare |
 
 ---
 
 ## Research and Data Justification
 
-Zyro's trigger thresholds are drawn from published government data — not set by internal assumption.
+Zyro's trigger thresholds are drawn from published government data - not set by internal assumption.
 
 | Source | Authority | Data Used | Why This Threshold |
 |---|---|---|---|
@@ -166,7 +166,7 @@ Step 7 — Fraud Scoring
   Rule-layer checks: duplicate claim prevention, new-account flags, zone-visit history.
   Anomaly scoring: lightweight isolation forest on behavioural signals.
   Motion check: GPS vs. motion signal consistency (prototype: basic; full kinetic SDK: production).
-  Output: confidence tier per worker — High, Medium, or Review.
+  Output: confidence tier per worker - High, Medium, or Review.
           |
 Step 8 — Payout Execution (ZyroCredit)
   High-confidence: UPI transfer executes immediately.
