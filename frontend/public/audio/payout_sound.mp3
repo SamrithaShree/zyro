@@ -1,0 +1,3 @@
+// Placeholder — the browser Vibration API is used instead of a real audio file.
+// This file exists at the expected path so App references don't break.
+// Replace with a real payout chime MP3 for production.
