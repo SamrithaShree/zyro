@@ -119,7 +119,7 @@ export function Profile() {
           <div>
             <h3 className="text-xs text-muted-foreground mb-3 px-2">ACCOUNT</h3>
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors text-left">
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-accent" />
                   <div className="text-left">
@@ -128,22 +128,21 @@ export function Profile() {
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
-              <div className="h-px bg-border" />
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors text-destructive"
-              >
-                <div className="flex items-center gap-3">
-                  <LogOut className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="font-medium">Log Out</div>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
             </div>
           </div>
-        </div>
+          </div>
+
+          {/* Log Out Button */}
+          <div className="mt-10 px-2">
+          <button 
+            onClick={handleLogout}
+            className="w-full h-14 rounded-2xl bg-destructive/10 border-2 border-destructive/20 text-destructive font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-destructive hover:text-white transition-all active:scale-[0.98] shadow-sm"
+          >
+            <LogOut className="w-5 h-5" />
+            Log Out Securely
+          </button>
+          </div>
+
 
         {/* App Info */}
         <div className="mt-8 text-center">

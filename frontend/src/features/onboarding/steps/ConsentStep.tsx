@@ -16,10 +16,9 @@ export function ConsentStep() {
     try {
       await apiService.auth.permissions({
         location_consent: data.locationConsent,
-        camera_consent: data.cameraConsent, // Backend expects data_consent? Let's check
         notification_consent: true,
         data_consent: data.termsConsent
-      } as any);
+      });
       await syncWithBackend();
     } catch (error) {
       // Error handled by interceptor
@@ -36,51 +35,81 @@ export function ConsentStep() {
       </div>
 
       <div className="space-y-4 flex-1">
-        <div className="p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5 shadow-sm flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#62B6CB]/10 flex items-center justify-center shrink-0">
-            <MapPin className="w-5 h-5 text-[#62B6CB]" />
+        <div 
+          onClick={() => updateData({ locationConsent: !data.locationConsent })}
+          className={`p-5 rounded-3xl border-2 transition-all flex items-start gap-4 cursor-pointer shadow-sm ${
+            data.locationConsent 
+              ? "bg-[#62B6CB]/5 border-[#62B6CB] shadow-md" 
+              : "bg-white border-[#1B4965]/5 hover:border-[#62B6CB]/30"
+          }`}
+        >
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
+            data.locationConsent ? "bg-[#62B6CB] text-white" : "bg-[#62B6CB]/10 text-[#62B6CB]"
+          }`}>
+            <MapPin className="w-6 h-6" />
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-[#1B4965]">Location</span>
+              <span className="font-black text-[#1B4965] tracking-tight">Location Access</span>
               <Checkbox 
                 checked={data.locationConsent} 
-                onCheckedChange={(val) => updateData({ locationConsent: !!val })}
+                onCheckedChange={() => {}} // Controlled by div click
+                className="pointer-events-none"
               />
             </div>
-            <p className="text-xs text-[#1B4965]/60">Used to detect disruptions in your delivery zone.</p>
+            <p className="text-xs font-medium text-[#1B4965]/50 leading-relaxed">Required to detect localized parametric triggers in your area.</p>
           </div>
         </div>
 
-        <div className="p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5 shadow-sm flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#62B6CB]/10 flex items-center justify-center shrink-0">
-            <Camera className="w-5 h-5 text-[#62B6CB]" />
+        <div 
+          onClick={() => updateData({ cameraConsent: !data.cameraConsent })}
+          className={`p-5 rounded-3xl border-2 transition-all flex items-start gap-4 cursor-pointer shadow-sm ${
+            data.cameraConsent 
+              ? "bg-[#62B6CB]/5 border-[#62B6CB] shadow-md" 
+              : "bg-white border-[#1B4965]/5 hover:border-[#62B6CB]/30"
+          }`}
+        >
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
+            data.cameraConsent ? "bg-[#62B6CB] text-white" : "bg-[#62B6CB]/10 text-[#62B6CB]"
+          }`}>
+            <Camera className="w-6 h-6" />
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-[#1B4965]">Camera</span>
+              <span className="font-black text-[#1B4965] tracking-tight">Camera & Face ID</span>
               <Checkbox 
                 checked={data.cameraConsent} 
-                onCheckedChange={(val) => updateData({ cameraConsent: !!val })}
+                onCheckedChange={() => {}} // Controlled by div click
+                className="pointer-events-none"
               />
             </div>
-            <p className="text-xs text-[#1B4965]/60">Required for selfie and Aadhaar verification.</p>
+            <p className="text-xs font-medium text-[#1B4965]/50 leading-relaxed">Used for selfie matching and secure Aadhaar verification.</p>
           </div>
         </div>
 
-        <div className="p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5 shadow-sm flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#62B6CB]/10 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-5 h-5 text-[#62B6CB]" />
+        <div 
+          onClick={() => updateData({ termsConsent: !data.termsConsent })}
+          className={`p-5 rounded-3xl border-2 transition-all flex items-start gap-4 cursor-pointer shadow-sm ${
+            data.termsConsent 
+              ? "bg-[#62B6CB]/5 border-[#62B6CB] shadow-md" 
+              : "bg-white border-[#1B4965]/5 hover:border-[#62B6CB]/30"
+          }`}
+        >
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
+            data.termsConsent ? "bg-[#62B6CB] text-white" : "bg-[#62B6CB]/10 text-[#62B6CB]"
+          }`}>
+            <ShieldCheck className="w-6 h-6" />
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-[#1B4965]">Agreement</span>
+              <span className="font-black text-[#1B4965] tracking-tight">User Agreement</span>
               <Checkbox 
                 checked={data.termsConsent} 
-                onCheckedChange={(val) => updateData({ termsConsent: !!val })}
+                onCheckedChange={() => {}} // Controlled by div click
+                className="pointer-events-none"
               />
             </div>
-            <p className="text-xs text-[#1B4965]/60">I agree to Terms, Privacy Policy and Payout Consent.</p>
+            <p className="text-xs font-medium text-[#1B4965]/50 leading-relaxed">I accept the Terms, Privacy Policy and IRDAI Sandbox terms.</p>
           </div>
         </div>
       </div>

@@ -94,7 +94,14 @@ export function Welcome() {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
              </Button>
 
-             <p className="text-center text-[10px] text-[#1B4965]/40 font-bold uppercase tracking-widest">
+             <button
+               onClick={() => navigate("/login")}
+               className="w-full py-2 text-center text-[#1B4965] font-bold text-sm uppercase tracking-widest hover:opacity-70 transition-opacity"
+             >
+                Already have an account? Sign In
+             </button>
+
+             <p className="text-center text-[10px] text-[#1B4965]/40 font-bold uppercase tracking-widest pt-2">
                 Trusted by 12,000+ Delivery Partners
              </p>
           </motion.div>

@@ -13,9 +13,21 @@ router = APIRouter()
 
 @router.post("/send-otp", response_model=GenericResponse)
 async def send_otp(request: OTPRequest):
+    # Check if user already exists
+    with db.db_lock:
+        worker_id = db.phone_to_worker_id.get(request.phone)
+        has_mpin = False
+        if worker_id:
+            worker = db.workers.get(worker_id)
+            has_mpin = worker.hashed_mpin is not None
+
     return GenericResponse(
         message="OTP sent successfully",
-        data={"otp": "123456"}
+        data={
+            "otp": "123456",
+            "is_registered": worker_id is not None,
+            "has_mpin": has_mpin
+        }
     )
 
 @router.post("/verify-otp", response_model=GenericResponse)
