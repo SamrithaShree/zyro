@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
-from ...schemas.policy import PolicyQuoteRequest, PolicyQuote, PolicyActivationResponse
-from ...schemas.generic import GenericResponse
-from ...services import insurance as ins
-from .workers import get_current_session
+from app.schemas.policy import PolicyQuoteRequest, PolicyQuote, PolicyActivationResponse
+from app.schemas.generic import GenericResponse
+from app.services import insurance as ins
+from app.api.v1.endpoints.workers import get_current_session
 
 router = APIRouter()
 

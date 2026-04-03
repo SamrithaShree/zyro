@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Header, Depends
-from ...schemas.auth import OTPRequest, OTPVerify, MPinSetup, MPinLogin, AuthResponse
-from ...schemas.generic import GenericResponse
-from ...services import auth_service as auth
-from ...db import session as db
+from app.schemas.auth import OTPRequest, OTPVerify, MPinSetup, MPinLogin, AuthResponse
+from app.schemas.generic import GenericResponse
+from app.services import auth_service as auth
+from app.db import session as db
 
 router = APIRouter()
 

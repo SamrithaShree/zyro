@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional, List
-from ..db import session as db
-from ..models.domain import Worker, Policy
-from ..core.pricing_logic import calculate_weekly_premium
+from app.db import session as db
+from app.models.domain import Worker, Policy
+from app.core.pricing_logic import calculate_weekly_premium
 
 def register_worker(phone: str, platform: str, zone: str, income_band: str) -> Worker:
     worker_id = f"W-{uuid.uuid4().hex[:8].upper()}"

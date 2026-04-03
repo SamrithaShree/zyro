@@ -2,8 +2,8 @@ import hashlib
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-from ..db import session as db
-from ..models.domain import Session, Worker
+from app.db import session as db
+from app.models.domain import Session, Worker
 
 def hash_mpin(mpin: str) -> str:
     """Simple hackathon-safe hashing."""

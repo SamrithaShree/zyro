@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Header, Depends
-from ...schemas.worker import WorkerRegister, WorkerInfo
-from ...schemas.generic import GenericResponse
-from ...services import insurance as ins
-from ...services import auth_service as auth
+from app.schemas.worker import WorkerRegister, WorkerInfo
+from app.schemas.generic import GenericResponse
+from app.services import insurance as ins
+from app.services import auth_service as auth
 
 router = APIRouter()
 
