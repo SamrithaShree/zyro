@@ -3,6 +3,10 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useOnboardingStore } from "../store/useOnboardingStore";
 
 // Screens
+import { SetPIN } from "./screens/SetPIN";
+import { LoginWithPIN } from "./screens/LoginWithPIN";
+import { RegistrationSummary } from "./screens/RegistrationSummary";
+import { RegistrationSuccess } from "./screens/RegistrationSuccess";
 import { Welcome } from "./screens/Welcome";
 import { PhoneLogin } from "./screens/PhoneLogin";
 import { Signup } from "./screens/Signup";
@@ -63,8 +67,12 @@ export const router = createBrowserRouter([
   // Public
   { path: "/", Component: Welcome },
   { path: "/login", Component: PhoneLogin },
+  { path: "/login-pin", Component: LoginWithPIN },
   { path: "/signup", Component: Signup },
   { path: "/verify-otp", Component: OTPVerification },
+  { path: "/set-pin", Component: SetPIN },
+  { path: "/registration-summary", Component: RegistrationSummary },
+  { path: "/registration-success", Component: RegistrationSuccess },
 
   // Onboarding (requires auth)
   {
