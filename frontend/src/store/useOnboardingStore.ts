@@ -2,134 +2,101 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { makePersistConfig } from "./middleware/persist";
 
-export type OnboardingStep =
-  | "CONSENT"
-  | "PLATFORM"
-  | "AADHAAR"
-  | "PLATFORM_ID"
-  | "SELFIE"
-  | "LOCATION"
-  | "WORK"
-  | "INCOME"
-  | "UPI"
-  | "DONE";
-
-export type Platform = "SWIGGY" | "ZOMATO" | "OTHER" | null;
-export type IncomeRange = "300-500" | "500-800" | "800-1200" | "1200+" | null;
-export type PeakHour = "MORNING" | "AFTERNOON" | "EVENING" | "NIGHT" | null;
-export type WorkHours = "4-6" | "6-8" | "8-10" | "10+" | null;
-
-interface Location {
-  zone: string;
-  city: string;
-  lat: number;
-  lng: number;
+export interface OnboardingData {
+  // Step 1: Consent
+  locationConsent: boolean;
+  cameraConsent: boolean;
+  termsConsent: boolean;
+  // Step 2: Basic Identity
+  name: string;
+  dob?: string;
+  gender?: string;
+  // Step 3: Platform
+  platform: string;
+  workerId?: string;
+  vehicleType?: string;
+  // Step 4: Aadhaar
+  aadhaarNumber: string;
+  // Step 5: Selfie
+  selfieUrl?: string;
+  // Step 6: Location
+  lat?: number;
+  lng?: number;
+  city?: string;
+  zone?: string;
+  // Step 7: Work Details
+  workingHoursPerDay: string;
+  peakHours: string;
+  daysPerWeek: string;
+  dailyIncome: string;
+  weeklyIncome: string;
+  incomeBand: string;
+  // Step 8: UPI
+  upiId: string;
+  // Step 10: mPIN
+  mpin?: string;
 }
 
 interface OnboardingState {
-  step: OnboardingStep;
-  consentGiven: boolean;
-  activityDetectionEnabled: boolean;
-  platform: Platform;
-  platformId: string;
-  platformVerified: boolean;
-  aadhaarLast4: string;
-  aadhaarStatus: "NONE" | "VERIFIED" | "SKIPPED";
-  selfieVerified: boolean;
-  location: Location | null;
-  workHours: WorkHours;
-  peakHour: PeakHour;
-  incomeRange: IncomeRange;
-  upiId: string;
-  upiAutopay: boolean;
+  currentStep: number;
+  data: OnboardingData;
+  isComplete: boolean;
 
   // Actions
-  setStep: (step: OnboardingStep) => void;
-  setConsent: (given: boolean, activityDetection: boolean) => void;
-  setPlatform: (platform: Platform) => void;
-  setPlatformId: (id: string, verified: boolean) => void;
-  setAadhaar: (last4: string, status: "VERIFIED" | "SKIPPED") => void;
-  setSelfie: (verified: boolean) => void;
-  setLocation: (location: Location) => void;
-  setWorkProfile: (hours: WorkHours, peak: PeakHour) => void;
-  setIncome: (range: IncomeRange) => void;
-  setUPI: (upiId: string, autopay: boolean) => void;
+  setStep: (step: number) => void;
+  nextStep: () => void;
+  prevStep: () => void;
+  updateData: (partialData: Partial<OnboardingData>) => void;
   complete: () => void;
   reset: () => void;
 }
 
-const initialState = {
-  step: "CONSENT" as OnboardingStep,
-  consentGiven: false,
-  activityDetectionEnabled: false,
-  platform: null as Platform,
-  platformId: "",
-  platformVerified: false,
-  aadhaarLast4: "",
-  aadhaarStatus: "NONE" as const,
-  selfieVerified: false,
-  location: null as Location | null,
-  workHours: null as WorkHours,
-  peakHour: null as PeakHour,
-  incomeRange: null as IncomeRange,
+const initialData: OnboardingData = {
+  locationConsent: false,
+  cameraConsent: false,
+  termsConsent: false,
+  name: "",
+  platform: "",
+  aadhaarNumber: "",
+  workingHoursPerDay: "8",
+  peakHours: "Evening",
+  daysPerWeek: "6",
+  dailyIncome: "800",
+  weeklyIncome: "5000",
+  incomeBand: "5000-7000",
   upiId: "",
-  upiAutopay: false,
 };
 
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
-      ...initialState,
+      currentStep: 1,
+      data: initialData,
+      isComplete: false,
 
-      setStep: (step) => set({ step }),
+      setStep: (step) => set({ currentStep: step }),
+      
+      nextStep: () => set((state) => ({ 
+        currentStep: Math.min(state.currentStep + 1, 11) 
+      })),
+      
+      prevStep: () => set((state) => ({ 
+        currentStep: Math.max(state.currentStep - 1, 1) 
+      })),
 
-      setConsent: (consentGiven, activityDetectionEnabled) =>
-        set({ consentGiven, activityDetectionEnabled, step: "PLATFORM" }),
+      updateData: (partialData) =>
+        set((state) => ({
+          data: { ...state.data, ...partialData },
+        })),
 
-      setPlatform: (platform) =>
-        set({ platform, step: "AADHAAR" }),
+      complete: () => set({ isComplete: true }),
 
-      setAadhaar: (aadhaarLast4, aadhaarStatus) =>
-        set({ aadhaarLast4, aadhaarStatus, step: "PLATFORM_ID" }),
-
-      setPlatformId: (platformId, platformVerified) =>
-        set({ platformId, platformVerified, step: "SELFIE" }),
-
-      setSelfie: (selfieVerified) => 
-        set({ selfieVerified, step: "LOCATION" }),
-
-      setLocation: (location) => 
-        set({ location, step: "WORK" }),
-
-      setWorkProfile: (workHours, peakHour) =>
-        set({ workHours, peakHour, step: "INCOME" }),
-
-      setIncome: (incomeRange) => 
-        set({ incomeRange, step: "UPI" }),
-
-      setUPI: (upiId, upiAutopay) =>
-        set({ upiId, upiAutopay, step: "DONE" }),
-
-      complete: () => set({ step: "DONE" }),
-
-      reset: () => set(initialState),
+      reset: () => set({ currentStep: 1, data: initialData, isComplete: false }),
     }),
-    makePersistConfig<OnboardingState>("onboarding", 1, (state) => ({
-      step: state.step,
-      consentGiven: state.consentGiven,
-      activityDetectionEnabled: state.activityDetectionEnabled,
-      platform: state.platform,
-      platformId: state.platformId,
-      platformVerified: state.platformVerified,
-      aadhaarLast4: state.aadhaarLast4,
-      aadhaarStatus: state.aadhaarStatus,
-      selfieVerified: state.selfieVerified,
-      location: state.location,
-      workHours: state.workHours,
-      peakHour: state.peakHour,
-      incomeRange: state.incomeRange,
-      upiId: state.upiId,
-      upiAutopay: state.upiAutopay,
+    makePersistConfig<OnboardingState>("onboarding", 2, (state) => ({
+      currentStep: state.currentStep,
+      data: state.data,
+      isComplete: state.isComplete,
     }))
   )
 );

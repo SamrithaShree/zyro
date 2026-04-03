@@ -1,212 +1,196 @@
+import { useState, useEffect } from "react";
 import { MobileContainer } from "../components/MobileContainer";
 import { BottomNav } from "../components/BottomNav";
-import { SystemBadge } from "../components/SystemBadge";
-import { TriggerIcon } from "../../components/common/TriggerIcon";
-import {
-  Shield,
-  MapPin,
-  CheckCircle2,
-  ArrowRight,
-  Calendar,
+import { 
+  ShieldCheck, 
+  MapPin, 
+  ShieldAlert, 
+  AlertCircle, 
+  ChevronRight, 
+  Activity,
+  History,
+  Zap,
+  Loader2
 } from "lucide-react";
-import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Button } from "../components/ui/button";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useOnboardingStore } from "../../store/useOnboardingStore";
-import { useClaimStore } from "../../store/useClaimStore";
-import { useNotificationHandler } from "../../hooks/useNotificationHandler";
+import { policyService, PolicyInfo } from "../../services/policyService";
+import { workerService, WorkerInfo } from "../../services/workerService";
+import { Button } from "../components/ui/button";
 
-const RECENT_PAYOUTS = [
-  { type: "RAIN" as const, amount: 485, date: "Apr 01", zone: "Anna Nagar" },
-  { type: "POLLUTION" as const, amount: 320, date: "Mar 28", zone: "Anna Nagar" },
-];
+/* ─────────────────────────────────────────
+   Palette Usage (Phase 2)
+   Background: #BEE9E8
+   Interactive: #62B6CB
+   Text: #1B4965
+   Secondary: #5FA8D3
+───────────────────────────────────────── */
 
 export function Dashboard() {
-  const navigate = useNavigate();
-  const { name, trustScore } = useAuthStore();
-  const { location, upiId } = useOnboardingStore();
-  const detectEvent = useClaimStore((s) => s.detectEvent);
-  // Registers window.triggerDemoClaim() for judges — safe inside Router
-  useNotificationHandler();
+  const { phone, workerId } = useAuthStore();
+  const [profile, setProfile] = useState<WorkerInfo | null>(null);
+  const [activePolicy, setActivePolicy] = useState<PolicyInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleDemoClaim = () => {
-    detectEvent(`EVT_${Date.now()}`, "RAIN", location?.zone || "Anna Nagar");
-    navigate("/disruption-detected");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profData, policyData] = await Promise.all([
+          workerService.getMe(),
+          policyService.getActivePolicy()
+        ]);
+        setProfile(profData);
+        setActivePolicy(policyData);
+      } catch (err) {
+        // Handle error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleActivate = async () => {
+    setLoading(true);
+    try {
+      const policy = await policyService.activatePolicy();
+      // Refetch after activation
+      const policyInfo = await policyService.getActivePolicy();
+      setActivePolicy(policyInfo);
+    } catch {
+       // handled
+    } finally {
+       setLoading(false);
+    }
   };
 
-  const trustPercent = trustScore;
-  const circumference = 2 * Math.PI * 22;
-  const trustOffset = circumference * (1 - trustPercent / 100);
+  if (loading) {
+    return (
+      <MobileContainer style={{ backgroundColor: "#BEE9E8" }}>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <Loader2 className="w-12 h-12 animate-spin text-[#62B6CB]" />
+        </div>
+        <BottomNav />
+      </MobileContainer>
+    );
+  }
 
   return (
-    <MobileContainer hasBottomNav>
-      <div className="px-6 py-8 space-y-5 pb-24">
+    <MobileContainer hasBottomNav style={{ backgroundColor: "#BEE9E8" }}>
+      <div className="px-8 pt-10 pb-24 space-y-8">
+        
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Hey {name} 👋</h2>
-            <div className="flex items-center gap-1 mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-accent" />
-              <p className="text-muted-foreground text-sm">
-                {location?.zone || "Anna Nagar"}, {location?.city || "Chennai"}
-              </p>
-            </div>
+          <div className="space-y-1">
+             <span className="text-[10px] font-black text-[#62B6CB] uppercase tracking-widest">WORKER PROFILE</span>
+             <h1 className="text-3xl font-black text-[#1B4965] tracking-tight">{workerId}</h1>
+             <div className="flex items-center gap-1.5 text-[#1B4965]/60">
+                <MapPin className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold">{profile?.zone}</span>
+             </div>
           </div>
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-background font-bold">
-            {name[0]}
+          <div className="w-14 h-14 rounded-2xl bg-white shadow-xl flex flex-col items-center justify-center border-2 border-[#62B6CB]/20">
+             <span className="text-xs font-black text-[#62B6CB]">{profile?.trustScore}</span>
+             <span className="text-[8px] font-bold text-[#1B4965]/40 uppercase tracking-tighter">TRUST</span>
           </div>
         </div>
 
-        {/* Coverage + Trust Score */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-card to-secondary border border-border rounded-2xl p-5"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">Protection Active</h3>
-                <p className="text-xs text-muted-foreground">All systems running</p>
-              </div>
-            </div>
-            <SystemBadge text="Monitoring" variant="cyan" />
-          </div>
+        {/* Policy Status */}
+        {activePolicy ? (
+          <div className="bg-[#1B4965] rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16" />
+             <div className="relative z-10 space-y-6">
+                <div className="flex justify-between items-start">
+                   <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                        <span className="text-[10px] font-black text-[#62B6CB] uppercase tracking-widest">ACTIVE PROTECTION</span>
+                      </div>
+                      <h2 className="text-4xl font-black tracking-tight">₹{activePolicy.premiumAmount} <span className="text-sm font-bold text-white/40">/ week</span></h2>
+                   </div>
+                   <ShieldCheck className="w-10 h-10 text-[#62B6CB]" />
+                </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/50">
-            {/* Trust Score with ring */}
-            <div className="text-center">
-              <div className="flex justify-center mb-1">
-                <svg width="44" height="44" viewBox="0 0 44 44" className="-rotate-90">
-                  <circle cx="22" cy="22" r="18" fill="none" stroke="#2A2E3C" strokeWidth="4" />
-                  <motion.circle
-                    cx="22" cy="22" r="22" fill="none"
-                    stroke="#FFA726" strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    initial={{ strokeDashoffset: circumference }}
-                    animate={{ strokeDashoffset: trustOffset }}
-                    transition={{ duration: 1.2 }}
-                  />
-                </svg>
-                <span className="absolute mt-3 text-sm font-bold text-primary">
-                  {trustScore}
-                </span>
-              </div>
-              <div className="text-xs text-muted-foreground">Trust</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-accent mb-1">24/7</div>
-              <div className="text-xs text-muted-foreground">Monitor</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-success mb-1">88%</div>
-              <div className="text-xs text-muted-foreground">Coverage</div>
-            </div>
-          </div>
-        </motion.div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="bg-white/5 p-4 rounded-2xl">
+                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider block mb-1">HOURLY BENEFIT</span>
+                      <span className="text-xl font-black">₹{activePolicy.hourlyBenefit}</span>
+                   </div>
+                   <div className="bg-white/5 p-4 rounded-2xl">
+                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider block mb-1">WEEKLY CAP</span>
+                      <span className="text-xl font-black">₹{activePolicy.weeklyCap}</span>
+                   </div>
+                </div>
 
-        {/* Weekly protection */}
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" />
-              <h3 className="font-semibold text-sm">This Week's Protection</h3>
-            </div>
-            <span className="text-xs text-muted-foreground">Resets in 6d</span>
+                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                   <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-[#62B6CB]" />
+                      <span className="text-xs font-medium text-white/60">Expires {new Date(activePolicy.validUntil).toLocaleDateString()}</span>
+                   </div>
+                   <button className="text-xs font-bold text-[#62B6CB]">View Policy</button>
+                </div>
+             </div>
           </div>
-          <div className="flex items-end gap-2 mb-2">
-            <span className="text-3xl font-bold text-success">₹805</span>
-            <span className="text-sm text-muted-foreground mb-1">protected so far</span>
-          </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-success to-accent rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: "52%" }}
-              transition={{ duration: 1, delay: 0.3 }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">Weekly coverage active</p>
-        </div>
-
-        {/* Trigger monitoring */}
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm">Zone Monitoring</h3>
-            <motion.div
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="flex items-center gap-1.5"
-            >
-              <div className="w-2 h-2 bg-success rounded-full" />
-              <span className="text-xs text-success">Live</span>
-            </motion.div>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {(["RAIN", "HEAT", "POLLUTION", "CURFEW"] as const).map((t) => (
-              <div key={t} className="flex flex-col items-center gap-1">
-                <TriggerIcon eventType={t} size="sm" showLabel />
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            System is monitoring your zone across all 4 triggers
-          </p>
-        </div>
-
-        {/* Recent payouts */}
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <h3 className="font-semibold text-sm mb-4">Recent Payouts</h3>
-          {RECENT_PAYOUTS.map((p, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between py-3 border-b border-border/50 last:border-0"
-            >
-              <div className="flex items-center gap-3">
-                <TriggerIcon eventType={p.type} size="sm" />
+        ) : (
+          <div className="bg-white rounded-[32px] p-8 shadow-xl border-2 border-[#1B4965]/5 space-y-6">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#62B6CB]/10 flex items-center justify-center">
+                   <ShieldAlert className="w-6 h-6 text-[#62B6CB]" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium">{p.type.charAt(0) + p.type.slice(1).toLowerCase()} event</p>
-                  <p className="text-xs text-muted-foreground">{p.date} · {p.zone}</p>
+                   <h3 className="font-black text-[#1B4965]">Unprotected</h3>
+                   <p className="text-xs text-[#1B4965]/60">You don't have an active plan for this week.</p>
                 </div>
-              </div>
-              <span className="font-bold text-success">+₹{p.amount}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Setup checklist */}
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <h3 className="font-semibold text-sm mb-3">Your Setup</h3>
-          <div className="space-y-2.5">
-            {[
-              { label: "Identity Verified", sub: "Aadhaar linked" },
-              { label: "Location Active", sub: location?.zone || "Anna Nagar" },
-              { label: "UPI Connected", sub: upiId || "Auto-pay ready" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-success" />
-                  <span className="text-sm">{item.label}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">{item.sub}</span>
-              </div>
-            ))}
+             </div>
+             <Button onClick={handleActivate} className="w-full h-14 rounded-2xl bg-[#62B6CB] text-white font-bold shadow-lg shadow-[#62B6CB]/20">
+                Activate Protection
+             </Button>
           </div>
+        )}
+
+        {/* Claim Awareness (Light) */}
+        <div className="space-y-4">
+           <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-[#1B4965] uppercase tracking-wider">Claim Pipeline</h3>
+              <Zap className="w-4 h-4 text-[#62B6CB]" />
+           </div>
+           
+           <div className="grid grid-cols-1 gap-4">
+              <div className="bg-white/60 backdrop-blur-sm rounded-[24px] p-5 border border-[#1B4965]/5 flex items-center gap-4">
+                 <div className="w-10 h-10 rounded-xl bg-[#1B4965]/5 flex items-center justify-center text-[#1B4965]">
+                    <Activity className="w-5 h-5" />
+                 </div>
+                 <div className="flex-1">
+                    <h4 className="text-xs font-bold text-[#1B4965]">Automatic Monitoring</h4>
+                    <p className="text-[10px] text-[#1B4965]/60">We track IMD weather and CPCB AQI data 24/7.</p>
+                 </div>
+                 <ChevronRight className="w-4 h-4 text-[#1B4965]/20" />
+              </div>
+
+              <div className="bg-white/60 backdrop-blur-sm rounded-[24px] p-5 border border-[#1B4965]/5 flex items-center gap-4">
+                 <div className="w-10 h-10 rounded-xl bg-[#1B4965]/5 flex items-center justify-center text-[#1B4965]">
+                    <AlertCircle className="w-5 h-5" />
+                 </div>
+                 <div className="flex-1">
+                    <h4 className="text-xs font-bold text-[#1B4965]">Disruption Detectors</h4>
+                    <p className="text-[10px] text-[#1B4965]/60">Zero claim filing required. Payouts are triggered by data.</p>
+                 </div>
+                 <ChevronRight className="w-4 h-4 text-[#1B4965]/20" />
+              </div>
+           </div>
         </div>
 
-        {/* Demo CTA */}
-        <Button
-          onClick={handleDemoClaim}
-          className="w-full h-14 bg-gradient-to-r from-accent to-primary text-background hover:opacity-90 font-semibold"
-        >
-          <span>Demo Claim Pipeline</span>
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
+        {/* Trust & Activity */}
+        <div className="bg-[#5FA8D3]/10 rounded-[32px] p-6 flex items-center gap-4 border border-[#5FA8D3]/20">
+           <div className="flex-1">
+              <span className="text-[10px] font-black text-[#5FA8D3] uppercase tracking-widest block mb-1">ACTIVITY STATE</span>
+              <p className="text-sm font-bold text-[#1B4965]">Ready for disruption detection</p>
+           </div>
+           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+              <div className="w-3 h-3 rounded-full bg-[#62B6CB] animate-ping" />
+           </div>
+        </div>
+
       </div>
       <BottomNav />
     </MobileContainer>

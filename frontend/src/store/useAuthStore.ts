@@ -5,12 +5,21 @@ import { makePersistConfig } from "./middleware/persist";
 interface AuthState {
   phone: string;
   isAuthenticated: boolean;
+  isRegistered: boolean;
+  hasMpin: boolean;
   token: string | null;
+  workerId: string | null;
   trustScore: number;
   name: string;
   // Actions
   setPhone: (phone: string) => void;
-  setAuthenticated: (token: string, name?: string) => void;
+  setAuth: (data: {
+    token: string;
+    isRegistered: boolean;
+    hasMpin: boolean;
+    workerId: string | null;
+    phone?: string;
+  }) => void;
   setTrustScore: (score: number) => void;
   logout: () => void;
 }
@@ -20,21 +29,34 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       phone: "",
       isAuthenticated: false,
+      isRegistered: false,
+      hasMpin: false,
       token: null,
+      workerId: null,
       trustScore: 78,
       name: "Rider",
 
       setPhone: (phone) => set({ phone }),
 
-      setAuthenticated: (token, name = "Rider") =>
-        set({ isAuthenticated: true, token, name }),
+      setAuth: (data) =>
+        set({
+          isAuthenticated: true,
+          token: data.token,
+          isRegistered: data.isRegistered,
+          hasMpin: data.hasMpin,
+          workerId: data.workerId,
+          phone: data.phone || undefined,
+        }),
 
       setTrustScore: (trustScore) => set({ trustScore }),
 
       logout: () =>
         set({
           isAuthenticated: false,
+          isRegistered: false,
+          hasMpin: false,
           token: null,
+          workerId: null,
           phone: "",
           trustScore: 78,
           name: "Rider",
@@ -43,7 +65,10 @@ export const useAuthStore = create<AuthState>()(
     makePersistConfig<AuthState>("auth", 1, (state) => ({
       phone: state.phone,
       isAuthenticated: state.isAuthenticated,
+      isRegistered: state.isRegistered,
+      hasMpin: state.hasMpin,
       token: state.token,
+      workerId: state.workerId,
       trustScore: state.trustScore,
       name: state.name,
     }))

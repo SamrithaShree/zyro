@@ -6,24 +6,25 @@ import {
   Delete,
   Loader2,
   ShieldCheck,
+  ChevronRight,
+  Fingerprint,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  sendOTP,
-  verifyOTP,
-  verifyMPIN,
-  checkUserExists,
-} from "../../services/mock/auth.mock";
+import { authService } from "../../services/authService";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useOnboardingStore } from "../../store/useOnboardingStore";
 import { toast } from "sonner";
 
 /* ─────────────────────────────────────────
-   Types
+   Palette & Style Config (Phase 2 Pro)
+   Background: #1B4965 (Deep Navy)
+   Surface: #FFFFFF (Pure White)
+   Interactive: #62B6CB (Accent Blue)
+   Success: #5FA8D3 (Muted Sky)
 ───────────────────────────────────────── */
+
 type Step = "phone" | "otp" | "mpin" | "loading";
 
 const KEYPAD = [
@@ -33,38 +34,32 @@ const KEYPAD = [
   ["", "0", "⌫"],
 ];
 
-/* ─────────────────────────────────────────
-   Step indicator strip
-───────────────────────────────────────── */
-function StepStrip({ step }: { step: Step }) {
-  const steps: Step[] = ["phone", "otp", "mpin"];
-  const idx = steps.indexOf(step);
-  return (
-    <div className="flex items-center gap-2 mb-8">
-      <span className="text-xs text-muted-foreground whitespace-nowrap">
-        Step {Math.max(idx + 1, 1)} / 3
-      </span>
-      <div className="flex-1 flex gap-1.5">
-        {steps.map((s, i) => (
-          <motion.div
-            key={s}
-            className="h-1 flex-1 rounded-full overflow-hidden bg-secondary"
-          >
-            <motion.div
-              className="h-full rounded-full"
-              style={{
-                background: "linear-gradient(90deg,#FFA726,#00E5FF)",
-              }}
-              initial={{ width: "0%" }}
-              animate={{ width: i <= idx ? "100%" : "0%" }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-            />
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const containerVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { 
+      duration: 0.4,
+      staggerChildren: 0.08,
+      ease: [0.25, 1, 0.5, 1]
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    y: -10,
+    transition: { duration: 0.2 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" }
+  }
+};
 
 /* ─────────────────────────────────────────
    STEP 1 — Phone
@@ -76,23 +71,15 @@ function PhoneStep({
 }) {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSend = async () => {
     if (phone.length !== 10) return;
     setLoading(true);
-    setError(null);
     try {
-      const { exists } = await checkUserExists(phone);
-      if (!exists) {
-        setError("No account found. Please sign up first.");
-        setLoading(false);
-        return;
-      }
-      await sendOTP(phone);
+      await authService.sendOtp(phone);
       onDone(phone);
     } catch {
-      toast.error("Couldn't send OTP. Try again.");
+      // Handled by API interceptor
     } finally {
       setLoading(false);
     }
@@ -101,38 +88,32 @@ function PhoneStep({
   return (
     <motion.div
       key="phone"
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="flex-1 flex flex-col"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="flex-1 flex flex-col pt-4"
     >
-      {/* Icon + header */}
-      <div className="mb-8">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-          style={{ background: "rgba(0,229,255,0.1)" }}
-        >
-          <Smartphone className="w-8 h-8 text-accent" />
+      <motion.div variants={itemVariants} className="mb-12">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/10 ring-1 ring-white/20 shadow-inner">
+          <Smartphone className="w-7 h-7 text-white" strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold mb-1">Welcome back</h1>
-        <p className="text-muted-foreground text-sm">
-          Enter your registered phone number
+        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Identity</h1>
+        <p className="text-[#BEE9E8]/70 text-base max-w-[280px] leading-relaxed">
+          Verify your mobile number to access your protected income dashboard.
         </p>
-      </div>
+      </motion.div>
 
-      {/* Phone input */}
-      <div className="space-y-4 flex-1">
-        <div>
-          <label className="block text-sm mb-2 text-muted-foreground">
-            Phone Number
+      <motion.div variants={itemVariants} className="space-y-8 flex-1">
+        <div className="bg-white rounded-[2rem] p-8 shadow-2xl shadow-black/20">
+          <label className="block text-[11px] font-bold mb-4 text-[#1B4965]/40 uppercase tracking-[0.15em]">
+            Registered Mobile Number
           </label>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 h-14 bg-card rounded-xl border border-border flex-shrink-0">
-              <span className="text-foreground font-medium">+91</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 h-16 bg-[#F8FAFC] rounded-2xl border border-[#1B4965]/5">
+              <span className="text-[#1B4965] font-black text-lg">+91</span>
             </div>
             <Input
-              id="signin-phone"
               type="tel"
               placeholder="00000 00000"
               value={phone}
@@ -140,71 +121,33 @@ function PhoneStep({
                 setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
               }
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              className="flex-1 h-14 bg-card border-border text-lg tracking-widest"
+              className="flex-1 h-16 bg-[#F8FAFC] border-none rounded-2xl text-xl font-bold tracking-[0.1em] text-[#1B4965] placeholder:text-[#1B4965]/20 focus-visible:ring-2 focus-visible:ring-[#62B6CB]/20 transition-all"
               maxLength={10}
               autoFocus
             />
           </div>
+          
+          <div className="mt-8 flex items-start gap-3 p-4 bg-[#BEE9E8]/10 rounded-xl border border-[#BEE9E8]/10">
+            <ShieldCheck className="w-5 h-5 text-[#62B6CB] mt-0.5 shrink-0" />
+            <p className="text-xs text-[#1B4965]/60 leading-normal">
+              A secure 6-digit code will be sent to this number for multi-factor authentication.
+            </p>
+          </div>
         </div>
+      </motion.div>
 
-        {/* Error */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="rounded-xl p-3 bg-destructive/10 border border-destructive/30 flex items-start gap-2"
-            >
-              <span className="text-destructive text-xs leading-relaxed">
-                {error}{" "}
-                {error.includes("sign up") && (
-                  <a
-                    href="/signup"
-                    className="underline font-medium text-primary"
-                  >
-                    Sign up →
-                  </a>
-                )}
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Fine print */}
-        <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
-          <p className="text-xs text-muted-foreground">
-            We'll send a 6-digit OTP to verify your identity.
-          </p>
-        </div>
-      </div>
-
-      {/* CTA */}
-      <motion.div whileTap={{ scale: 0.97 }} className="mt-6">
+      <motion.div variants={itemVariants} whileTap={{ scale: 0.98 }} className="mt-8 pb-4">
         <Button
-          id="signin-send-otp"
           onClick={handleSend}
           disabled={phone.length !== 10 || loading}
-          className="w-full h-14 rounded-2xl font-bold text-base disabled:opacity-40"
-          style={{
-            background:
-              phone.length === 10
-                ? "linear-gradient(90deg,#FFA726,#FFCA28)"
-                : undefined,
-            color: phone.length === 10 ? "#0F1115" : undefined,
-            boxShadow:
-              phone.length === 10
-                ? "0 0 24px rgba(255,167,38,0.3)"
-                : undefined,
-          }}
+          className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl shadow-[#62B6CB]/20 bg-[#62B6CB] text-white hover:bg-[#5FA8D3] border-none transition-all group"
         >
           {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Checking…
-            </span>
+            <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
-            "Send OTP"
+            <span className="flex items-center gap-2">
+              Send OTP <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </span>
           )}
         </Button>
       </motion.div>
@@ -220,31 +163,21 @@ function OTPStep({
   onDone,
 }: {
   phone: string;
-  onDone: (token: string, name: string) => void;
+  onDone: (data: any) => void;
 }) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [resendSecs, setResendSecs] = useState(30);
   const refs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     refs.current[0]?.focus();
   }, []);
 
-  // Resend timer
-  useEffect(() => {
-    if (resendSecs <= 0) return;
-    const t = setTimeout(() => setResendSecs((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendSecs]);
-
   const handleChange = (i: number, val: string) => {
     if (!/^\d*$/.test(val)) return;
     const next = [...otp];
-    next[i] = val;
+    next[i] = val.slice(-1);
     setOtp(next);
-    setError(null);
     if (val && i < 5) refs.current[i + 1]?.focus();
     if (next.every(Boolean) && i === 5) submit(next.join(""));
   };
@@ -256,12 +189,10 @@ function OTPStep({
 
   const submit = async (code: string) => {
     setLoading(true);
-    setError(null);
     try {
-      const res = await verifyOTP(phone, code);
-      onDone(res.token, res.name);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid OTP");
+      const res = await authService.verifyOtp(phone, code);
+      onDone(res);
+    } catch {
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => refs.current[0]?.focus(), 50);
     } finally {
@@ -269,136 +200,62 @@ function OTPStep({
     }
   };
 
-  const resend = async () => {
-    await sendOTP(phone);
-    setResendSecs(30);
-    setOtp(["", "", "", "", "", ""]);
-    refs.current[0]?.focus();
-    toast.success("New OTP sent!");
-  };
-
-  const isComplete = otp.every(Boolean);
-
   return (
     <motion.div
       key="otp"
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="flex-1 flex flex-col"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="flex-1 flex flex-col pt-4"
     >
-      {/* Header */}
-      <div className="mb-8">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-          style={{ background: "rgba(0,255,135,0.1)" }}
-        >
-          <ShieldCheck className="w-8 h-8" style={{ color: "#00FF87" }} />
+      <motion.div variants={itemVariants} className="mb-12">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/10 ring-1 ring-white/20 shadow-inner text-white">
+          <ShieldCheck className="w-7 h-7" strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold mb-1">Verify your number</h1>
-        <p className="text-muted-foreground text-sm">
-          6-digit OTP sent to{" "}
-          <span className="text-foreground font-medium">+91 {phone}</span>
+        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Security Check</h1>
+        <p className="text-[#BEE9E8]/70 text-base leading-relaxed">
+          Sent a 6-digit verification code to <span className="text-white font-bold tracking-wider">+91 {phone}</span>
         </p>
-      </div>
+      </motion.div>
 
-      {/* OTP boxes */}
-      <div className="space-y-5 flex-1">
-        <div className="flex gap-2 justify-center">
-          {otp.map((d, i) => (
-            <input
-              key={i}
-              ref={(el) => { refs.current[i] = el; }}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={d}
-              onChange={(e) => handleChange(i, e.target.value)}
-              onKeyDown={(e) => handleKey(i, e)}
-              className={`w-12 h-14 bg-card border-2 rounded-xl text-center text-xl font-bold focus:outline-none transition-all ${
-                error
-                  ? "border-destructive"
-                  : d
-                  ? "border-accent"
-                  : "border-border focus:border-accent"
-              }`}
-              aria-label={`OTP digit ${i + 1}`}
-            />
-          ))}
+      <motion.div variants={itemVariants} className="flex-1">
+        <div className="bg-white rounded-[2rem] p-8 shadow-2xl shadow-black/20 text-center">
+          <div className="flex gap-2.5 justify-center mb-8">
+            {otp.map((d, i) => (
+              <input
+                key={i}
+                ref={(el) => { refs.current[i] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={d}
+                onChange={(e) => handleChange(i, e.target.value)}
+                onKeyDown={(e) => handleKey(i, e)}
+                className="w-11 h-14 bg-[#F8FAFC] border-none rounded-xl text-center text-2xl font-bold text-[#1B4965] focus:ring-2 focus:ring-[#62B6CB]/30 focus:outline-none transition-all"
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => authService.sendOtp(phone)}
+            className="text-[#62B6CB] font-bold text-sm hover:text-[#5FA8D3] transition-colors flex items-center justify-center gap-1 mx-auto"
+          >
+            Didn't receive code? <span className="underline underline-offset-4">Resend</span>
+          </button>
         </div>
+      </motion.div>
 
-        <AnimatePresence>
-          {error && (
-            <motion.p
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="text-sm text-destructive text-center"
-            >
-              {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
-
-        {/* Resend */}
-        <div className="text-center">
-          {resendSecs > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Resend in{" "}
-              <span className="text-foreground font-medium tabular-nums">
-                {resendSecs}s
-              </span>
-            </p>
-          ) : (
-            <button
-              onClick={resend}
-              className="text-sm text-accent font-semibold"
-            >
-              Resend OTP
-            </button>
-          )}
-        </div>
-
-        {/* Auto-filled hint */}
-        <AnimatePresence>
-          {isComplete && !error && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 bg-success/5 border border-success/20 rounded-xl p-3"
-            >
-              <ShieldCheck className="w-4 h-4 text-success flex-shrink-0" />
-              <span className="text-sm text-success">
-                {loading ? "Verifying…" : "Code complete — tap Verify"}
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* CTA */}
-      <motion.div whileTap={{ scale: 0.97 }} className="mt-6">
+      <motion.div variants={itemVariants} whileTap={{ scale: 0.98 }} className="mt-8 pb-4">
         <Button
-          id="signin-verify-otp"
           onClick={() => submit(otp.join(""))}
-          disabled={!isComplete || loading}
-          className="w-full h-14 rounded-2xl font-bold text-base disabled:opacity-40"
-          style={{
-            background: isComplete
-              ? "linear-gradient(90deg,#FFA726,#FFCA28)"
-              : undefined,
-            color: isComplete ? "#0F1115" : undefined,
-            boxShadow: isComplete ? "0 0 24px rgba(255,167,38,0.3)" : undefined,
-          }}
+          disabled={!otp.every(Boolean) || loading}
+          className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl shadow-[#62B6CB]/20 bg-[#62B6CB] text-white"
         >
           {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Verifying…
-            </span>
+            <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
-            "Verify"
+            "Verify & Continue"
           )}
         </Button>
       </motion.div>
@@ -415,34 +272,30 @@ function MPINStep({
   onForgot,
 }: {
   phone: string;
-  onDone: (token: string, name: string) => void;
+  onDone: (data: any) => void;
   onForgot: () => void;
 }) {
   const [pin, setPin] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [shaking, setShaking] = useState(false);
 
   const handleKey = async (key: string) => {
     if (key === "⌫") {
       setPin((p) => p.slice(0, -1));
-      setError(null);
       return;
     }
     if (pin.length >= 4) return;
     const next = [...pin, key];
     setPin(next);
-    setError(null);
 
     if (next.length === 4) {
       setLoading(true);
       try {
-        const res = await verifyMPIN(phone, next.join(""));
-        onDone(res.token, res.name);
-      } catch (err) {
+        const res = await authService.loginMpin(phone, next.join(""));
+        onDone(res);
+      } catch {
         setShaking(true);
         setTimeout(() => setShaking(false), 500);
-        setError(err instanceof Error ? err.message : "Wrong PIN");
         setPin([]);
       } finally {
         setLoading(false);
@@ -453,301 +306,131 @@ function MPINStep({
   return (
     <motion.div
       key="mpin"
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="flex-1 flex flex-col items-center"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="flex-1 flex flex-col items-center pt-4"
     >
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 mx-auto"
-          style={{ background: "rgba(255,167,38,0.1)" }}
-        >
-          <span className="text-3xl">🔐</span>
+      <motion.div variants={itemVariants} className="mb-12 text-center flex flex-col items-center">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/10 ring-1 ring-white/20 shadow-inner">
+          <Fingerprint className="w-7 h-7 text-white" strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold mb-1">Enter your 4-digit PIN</h1>
-        <p className="text-muted-foreground text-sm">
-          Your MPIN keeps your account secure
-        </p>
-      </div>
-
-      {/* PIN dots */}
-      <motion.div
-        className="flex gap-4 mb-4"
-        animate={shaking ? { x: [0, -10, 10, -10, 10, 0] } : {}}
-        transition={{ duration: 0.4 }}
-      >
-        {Array.from({ length: 4 }, (_, i) => {
-          const filled = i < pin.length;
-          return (
-            <motion.div
-              key={i}
-              animate={{
-                scale: filled ? 1 : 0.85,
-                backgroundColor: filled
-                  ? "#FFA726"
-                  : "rgba(255,255,255,0.06)",
-                borderColor: filled
-                  ? "#FFA726"
-                  : "rgba(255,255,255,0.12)",
-              }}
-              transition={{ duration: 0.15 }}
-              className="w-14 h-14 rounded-2xl border-2 flex items-center justify-center"
-            >
-              {filled && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-4 h-4 rounded-full bg-background"
-                />
-              )}
-            </motion.div>
-          );
-        })}
+        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Access Key</h1>
+        <p className="text-[#BEE9E8]/70 text-base">Authorize your login with 4-digit mPIN</p>
       </motion.div>
 
-      {/* Loading spinner while verifying */}
-      <AnimatePresence>
-        {loading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-2 text-sm text-muted-foreground mb-2"
-          >
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Verifying PIN…
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Error */}
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="text-sm text-destructive text-center mb-2"
-          >
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
-
-      {/* Forgot PIN */}
-      <button
-        onClick={onForgot}
-        className="text-sm text-accent font-medium mb-6 hover:underline"
+      <motion.div
+        variants={itemVariants}
+        className="flex gap-6 mb-12"
+        animate={shaking ? { x: [0, -10, 10, -10, 10, 0] } : {}}
       >
-        Forgot PIN? Reset via OTP
-      </button>
-
-      {/* Keypad */}
-      <div className="w-full max-w-xs space-y-3">
-        {KEYPAD.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-3 gap-3">
-            {row.map((key, ki) => (
-              <motion.button
-                key={ki}
-                onClick={() => key && !loading && handleKey(key)}
-                disabled={!key || loading}
-                whileTap={{ scale: key ? 0.92 : 1 }}
-                className={`h-16 rounded-2xl font-semibold text-xl transition-colors ${
-                  !key
-                    ? "opacity-0 pointer-events-none"
-                    : key === "⌫"
-                    ? "bg-card border border-border text-muted-foreground hover:border-accent/40"
-                    : "bg-card border border-border hover:border-accent/40 active:bg-accent/5"
-                }`}
-              >
-                {key === "⌫" ? (
-                  <span className="flex items-center justify-center">
-                    <Delete className="w-5 h-5" />
-                  </span>
-                ) : (
-                  key
-                )}
-              </motion.button>
-            ))}
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────
-   STEP 4 — Loading / Fetching Profile
-───────────────────────────────────────── */
-function LoadingStep({ name }: { name: string }) {
-  return (
-    <motion.div
-      key="loading"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex-1 flex flex-col items-center justify-center text-center gap-6"
-    >
-      {/* Spinner ring */}
-      <div className="relative w-24 h-24">
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ border: "3px solid rgba(0,229,255,0.15)" }}
-        />
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{
-            border: "3px solid transparent",
-            borderTopColor: "#FFA726",
-            borderRightColor: "#00E5FF",
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl">⚡</span>
-        </div>
-      </div>
-
-      <div>
-        <p className="text-lg font-semibold text-foreground mb-1">
-          Hey, {name}! 👋
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Fetching your profile…
-        </p>
-      </div>
-
-      {/* Animated dots */}
-      <div className="flex gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <motion.div
+        {Array.from({ length: 4 }, (_, i) => (
+          <div
             key={i}
-            className="w-2 h-2 rounded-full bg-primary"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{
-              duration: 1.2,
-              repeat: Infinity,
-              delay: i * 0.2,
-            }}
+            className={`w-4 h-4 rounded-full transition-all duration-300 ${
+              i < pin.length ? "bg-[#62B6CB] scale-125 shadow-[0_0_10px_#62B6CB]" : "bg-white/20"
+            }`}
           />
         ))}
-      </div>
+      </motion.div>
+
+      <motion.div variants={itemVariants} className="w-full grid grid-cols-3 gap-5 max-w-[300px]">
+        {KEYPAD.flat().map((key, i) => (
+          <motion.button
+            key={i}
+            onClick={() => key && !loading && handleKey(key)}
+            disabled={!key || loading}
+            whileTap={{ scale: 0.92 }}
+            className={`h-16 rounded-2xl font-bold text-2xl flex items-center justify-center transition-all ${
+              !key ? "opacity-0 cursor-default" : "bg-white/10 text-white border border-white/5 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm shadow-sm"
+            }`}
+          >
+            {key === "⌫" ? <Delete className="w-6 h-6" /> : key}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      <motion.button
+        variants={itemVariants}
+        onClick={onForgot}
+        className="text-[#BEE9E8]/60 font-bold text-sm mt-12 hover:text-white transition-colors"
+      >
+        Forgot Access Key? Use OTP
+      </motion.button>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────
-   Root — PhoneLogin (Sign In Flow)
+   Root — PhoneLogin
 ───────────────────────────────────────── */
 export function PhoneLogin() {
   const navigate = useNavigate();
-  const setPhone = useAuthStore((s) => s.setPhone);
-  const setAuthenticated = useAuthStore((s) => s.setAuthenticated);
-  const completeOnboarding = useOnboardingStore((s) => s.complete);
+  const setAuth = useAuthStore((s) => s.setAuth);
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhoneLocal] = useState("");
-  const [userName, setUserName] = useState("Arjun");
 
-  /* Step handlers */
   const handlePhoneDone = (p: string) => {
     setPhoneLocal(p);
-    setPhone(p);
     setStep("otp");
   };
 
-  const handleOTPDone = (token: string, name: string) => {
-    setUserName(name);
-    // Store partial auth — pin still needed
-    setAuthenticated(token, name);
-    setStep("mpin");
+  const handleOTPDone = (data: any) => {
+    if (data.isRegistered && data.hasMpin) {
+      setStep("mpin");
+    } else {
+      setAuth({ ...data, phone });
+      navigate("/onboarding");
+    }
   };
 
-  const handleMPINDone = (token: string, name: string) => {
-    setAuthenticated(token, name);
-    completeOnboarding(); // returning user — skip onboarding
+  const handleMPINDone = (data: any) => {
+    setAuth({ ...data, phone });
     setStep("loading");
-    setTimeout(() => navigate("/dashboard"), 2200);
+    setTimeout(() => navigate("/dashboard"), 1500);
   };
 
-  /* Forgot PIN → back to OTP step */
-  const handleForgotPIN = () => {
-    setStep("otp");
-  };
-
-  /* Back logic per step */
   const handleBack = () => {
     if (step === "phone") navigate("/");
     else if (step === "otp") setStep("phone");
     else if (step === "mpin") setStep("otp");
   };
 
-  const showBack = step !== "loading";
-
   return (
-    <MobileContainer>
-      <div className="flex flex-col min-h-screen px-6 py-8">
-        {/* Back button */}
-        {showBack && (
+    <MobileContainer style={{ backgroundColor: "#1B4965" }}>
+      <div className="flex flex-col min-h-screen px-8 py-10 selection:bg-[#62B6CB] selection:text-white">
+        {step !== "loading" && (
           <button
-            id="signin-back"
             onClick={handleBack}
-            className="flex items-center gap-2 text-muted-foreground mb-6 self-start"
+            className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/10 text-white mb-10 ring-1 ring-white/10 hover:bg-white/20 transition-all shadow-sm"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Back</span>
           </button>
         )}
 
-        {/* Step indicator */}
-        {step !== "loading" && <StepStrip step={step} />}
-
-        {/* Step content */}
         <AnimatePresence mode="wait">
-          {step === "phone" && (
-            <PhoneStep key="phone" onDone={handlePhoneDone} />
-          )}
-
-          {step === "otp" && (
-            <OTPStep key="otp" phone={phone} onDone={handleOTPDone} />
-          )}
-
-          {step === "mpin" && (
-            <MPINStep
-              key="mpin"
-              phone={phone}
-              onDone={handleMPINDone}
-              onForgot={handleForgotPIN}
-            />
-          )}
-
+          {step === "phone" && <PhoneStep onDone={handlePhoneDone} />}
+          {step === "otp" && <OTPStep phone={phone} onDone={handleOTPDone} />}
+          {step === "mpin" && <MPINStep phone={phone} onDone={handleMPINDone} onForgot={() => setStep("otp")} />}
           {step === "loading" && (
-            <LoadingStep key="loading" name={userName} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex-1 flex flex-col items-center justify-center text-center gap-8"
+            >
+               <div className="relative">
+                 <Loader2 className="w-14 h-14 animate-spin text-[#62B6CB] relative z-10" strokeWidth={2.5} />
+                 <div className="absolute inset-0 w-14 h-14 bg-[#62B6CB]/20 blur-xl animate-pulse" />
+               </div>
+               <div className="space-y-2">
+                 <p className="text-2xl font-black text-white tracking-tight">Authorizing</p>
+                 <p className="text-white/40 text-sm font-medium">Securing your session...</p>
+               </div>
+            </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Sign up nudge */}
-        {step === "phone" && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-xs text-center text-muted-foreground mt-6"
-          >
-            New to Zyro?{" "}
-            <button
-              onClick={() => navigate("/signup")}
-              className="text-accent font-semibold"
-            >
-              Create account
-            </button>
-          </motion.p>
-        )}
       </div>
     </MobileContainer>
   );

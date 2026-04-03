@@ -3,6 +3,7 @@ import { RouterProvider } from "react-router";
 import { router } from "./routes";
 import { Toaster } from "./components/ui/sonner";
 import { OfflineBanner } from "../components/common/OfflineBanner";
+import { ThemeProvider } from "next-themes";
 
 // ErrorBoundary — class component required by React
 class ErrorBoundary extends React.Component<
@@ -41,16 +42,18 @@ class ErrorBoundary extends React.Component<
 
 export default function App() {
   return (
-    <div className="dark">
-      <ErrorBoundary>
-        {/* OfflineBanner lives outside router — it only needs network status */}
-        <OfflineBanner />
-        {/* RouterProvider renders everything inside router context */}
-        <Suspense fallback={null}>
-          <RouterProvider router={router} />
-        </Suspense>
-        <Toaster richColors position="top-center" />
-      </ErrorBoundary>
-    </div>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <div className="dark">
+        <ErrorBoundary>
+          {/* OfflineBanner lives outside router — it only needs network status */}
+          <OfflineBanner />
+          {/* RouterProvider renders everything inside router context */}
+          <Suspense fallback={null}>
+            <RouterProvider router={router} />
+          </Suspense>
+          <Toaster richColors position="top-center" />
+        </ErrorBoundary>
+      </div>
+    </ThemeProvider>
   );
 }
