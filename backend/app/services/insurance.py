@@ -5,12 +5,19 @@ from app.db import session as db
 from app.models.domain import Worker, Policy
 from app.core.pricing_logic import calculate_weekly_premium
 
-def register_worker(phone: str, platform: str, zone: str, income_band: str) -> Worker:
+def register_worker(
+    phone: str, 
+    platform: str, 
+    zone: str, 
+    income_band: str,
+    upi_id: str,
+    masked_aadhaar: str,
+    city: str = "Chennai"
+) -> Worker:
     worker_id = f"W-{uuid.uuid4().hex[:8].upper()}"
     
     with db.db_lock:
         if phone in db.phone_to_worker_id:
-            # Re-fetch existing if already registered (idempotency)
             return db.workers[db.phone_to_worker_id[phone]]
             
         worker = Worker(
@@ -18,7 +25,11 @@ def register_worker(phone: str, platform: str, zone: str, income_band: str) -> W
             phone=phone,
             platform=platform,
             zone=zone,
-            income_band=income_band
+            city=city,
+            income_band=income_band,
+            upi_id=upi_id,
+            masked_aadhaar=masked_aadhaar,
+            worker_badge="ZYRO_VERIFIED"
         )
         db.workers[worker_id] = worker
         db.phone_to_worker_id[phone] = worker_id

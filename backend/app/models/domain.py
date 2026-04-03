@@ -8,8 +8,12 @@ class Worker(BaseModel):
     phone: str
     platform: Optional[str] = None
     zone: Optional[str] = None
+    city: Optional[str] = "Chennai"
     income_band: Optional[str] = None
+    upi_id: Optional[str] = None
+    masked_aadhaar: Optional[str] = None
     trust_score: float = 85.0
+    worker_badge: str = "ZYRO_VERIFIED"
     hashed_mpin: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -23,10 +27,34 @@ class Policy(BaseModel):
     valid_until: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+from app.core.onboarding import OnboardingState
+
 class Session(BaseModel):
     token: str
     phone: str
     worker_id: Optional[str] = None
     expires_at: datetime
-    is_otp_verified: bool = False
-    is_mpin_verified: bool = False
+    
+    # Onboarding State Machine
+    onboarding_state: OnboardingState = OnboardingState.INIT
+    
+    # Onboarding Flags (Retained for granular metadata)
+    phone_verified: bool = True
+    permissions_granted: bool = False
+    aadhaar_otp_sent: bool = False
+    aadhaar_linked: bool = False
+    selfie_verified: bool = False
+    location_verified: bool = False
+    work_profile_completed: bool = False
+    upi_configured: bool = False
+    insurance_acknowledged: bool = False
+    worker_created: bool = False
+    mpin_set: bool = False
+
+    # Temporary Onboarding Data
+    temp_platform: Optional[str] = None
+    temp_zone: Optional[str] = None
+    temp_income_band: Optional[str] = None
+    temp_masked_aadhaar: Optional[str] = None
+    temp_upi_id: Optional[str] = None
+    temp_location: Optional[dict] = None

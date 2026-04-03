@@ -1,5 +1,11 @@
 from pydantic import BaseModel
-from datetime import datetime
+
+class AcknowledgementRequest(BaseModel):
+    premium_acknowledged: bool
+    coverage_acknowledged: bool
+    exclusions_acknowledged: bool
+    terms_accepted: bool
+    privacy_accepted: bool
 
 class PolicyQuoteRequest(BaseModel):
     zone: str
@@ -13,4 +19,4 @@ class PolicyQuote(BaseModel):
 class PolicyActivationResponse(BaseModel):
     policy_id: str
     status: str
-    valid_until: datetime
+    valid_until: str
