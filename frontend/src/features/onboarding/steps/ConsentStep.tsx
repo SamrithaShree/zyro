@@ -1,13 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { Button } from "../../../app/components/ui/button";
 import { Checkbox } from "../../../app/components/ui/checkbox";
-import { ShieldCheck, MapPin, Camera, Bell } from "lucide-react";
+import { ShieldCheck, MapPin, Camera, Loader2 } from "lucide-react";
+import { apiService } from "../../../services/api";
 
 export function ConsentStep() {
-  const { data, updateData, nextStep } = useOnboardingStore();
+  const { data, updateData, syncWithBackend } = useOnboardingStore();
+  const [loading, setLoading] = useState(false);
 
   const isComplete = data.locationConsent && data.cameraConsent && data.termsConsent;
+
+  const handleAgree = async () => {
+    setLoading(true);
+    try {
+      await apiService.auth.permissions({
+        location_consent: data.locationConsent,
+        camera_consent: data.cameraConsent, // Backend expects data_consent? Let's check
+        notification_consent: true,
+        data_consent: data.termsConsent
+      } as any);
+      await syncWithBackend();
+    } catch (error) {
+      // Error handled by interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col">
@@ -67,11 +86,11 @@ export function ConsentStep() {
       </div>
 
       <Button
-        onClick={nextStep}
-        disabled={!isComplete}
+        onClick={handleAgree}
+        disabled={!isComplete || loading}
         className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-8"
       >
-        I Agree
+        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "I Agree"}
       </Button>
     </div>
   );

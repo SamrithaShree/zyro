@@ -1,38 +1,43 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { Button } from "../../../app/components/ui/button";
 import { MapPin, Loader2, Navigation } from "lucide-react";
+import { apiService } from "../../../services/api";
 
 export function LocationStep() {
-  const { data, updateData, nextStep } = useOnboardingStore();
+  const { data, updateData, syncWithBackend } = useOnboardingStore();
   const [isDetecting, setIsDetecting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const detectLocation = () => {
     setIsDetecting(true);
-    if (!navigator.geolocation) {
-       setIsDetecting(false);
-       // Fallback mock
-       updateData({ lat: 12.9716, lng: 77.5946, city: "Bengaluru", zone: "Koramangala" });
-       return;
-    }
+    // Simulate real GPS with a 1.5s delay
+    setTimeout(() => {
+      updateData({ 
+        lat: 13.0827, 
+        lng: 80.2707,
+        city: "Chennai",
+        zone: "Anna Nagar" 
+      });
+      setIsDetecting(false);
+    }, 1500);
+  };
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        // Real GPS
-        updateData({ 
-          lat: pos.coords.latitude, 
-          lng: pos.coords.longitude,
-          city: "Bengaluru", // Mock reverse geocode for now
-          zone: "HSR Layout"  // Mock zone
-        });
-        setIsDetecting(false);
-      },
-      () => {
-        setIsDetecting(false);
-        // Fallback mock
-        updateData({ lat: 12.9716, lng: 77.5946, city: "Bengaluru", zone: "Koramangala" });
-      }
-    );
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await apiService.worker.captureLocation({
+        lat: data.lat,
+        lng: data.lng,
+        city: data.city,
+        zone: data.zone
+      });
+      await syncWithBackend();
+    } catch (err) {
+      // Handled by interceptor
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isComplete = !!data.lat && !!data.zone;
@@ -89,10 +94,11 @@ export function LocationStep() {
           </Button>
         ) : (
           <Button
-            onClick={nextStep}
+            onClick={handleConfirm}
+            disabled={loading}
             className="w-full h-16 rounded-2xl font-bold text-lg bg-[#1B4965] text-white"
           >
-            Confirm Zone
+            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Confirm Zone"}
           </Button>
         )}
       </div>

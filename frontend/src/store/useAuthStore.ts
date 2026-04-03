@@ -15,9 +15,9 @@ interface AuthState {
   setPhone: (phone: string) => void;
   setAuth: (data: {
     token: string;
-    isRegistered: boolean;
-    hasMpin: boolean;
-    workerId: string | null;
+    is_registered: boolean;
+    has_mpin: boolean;
+    worker_id: string | null;
     phone?: string;
   }) => void;
   setTrustScore: (score: number) => void;
@@ -42,9 +42,9 @@ export const useAuthStore = create<AuthState>()(
         set({
           isAuthenticated: true,
           token: data.token,
-          isRegistered: data.isRegistered,
-          hasMpin: data.hasMpin,
-          workerId: data.workerId,
+          isRegistered: data.is_registered,
+          hasMpin: data.has_mpin,
+          workerId: data.worker_id,
           phone: data.phone || undefined,
         }),
 
@@ -62,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
           name: "Rider",
         }),
     }),
-    makePersistConfig<AuthState>("auth", 1, (state) => ({
+    makePersistConfig<AuthState>("auth", 2, (state) => ({
       phone: state.phone,
       isAuthenticated: state.isAuthenticated,
       isRegistered: state.isRegistered,

@@ -2,17 +2,15 @@ import { useState, useRef } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { Button } from "../../../app/components/ui/button";
 import { Camera, Loader2, CheckCircle2 } from "lucide-react";
+import { apiService } from "../../../services/api";
 
 export function SelfieStep() {
-  const { data, updateData, nextStep } = useOnboardingStore();
-  const [isCapturing, setIsCapturing] = useState(false);
+  const { data, updateData, syncWithBackend } = useOnboardingStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [confidence, setConfidence] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCapture = () => {
-    // In a real app, this would open camera
-    // For demo, we trigger file picker
     fileInputRef.current?.click();
   };
 
@@ -20,13 +18,22 @@ export function SelfieStep() {
     const file = e.target.files?.[0];
     if (file) {
       setIsProcessing(true);
-      // Simulate AI analysis
-      setTimeout(() => {
-        setIsProcessing(false);
-        setConfidence(98.4);
-        updateData({ selfieUrl: URL.createObjectURL(file) });
+      // Simulate AI analysis and hit backend
+      setTimeout(async () => {
+        try {
+          await apiService.auth.verifySelfie("mock_payload");
+          setIsProcessing(false);
+          setConfidence(98.4);
+          updateData({ selfieUrl: URL.createObjectURL(file) });
+        } catch (err) {
+          setIsProcessing(false);
+        }
       }, 2000);
     }
+  };
+
+  const handleContinue = async () => {
+    await syncWithBackend();
   };
 
   return (
@@ -89,7 +96,7 @@ export function SelfieStep() {
           </Button>
         ) : (
           <Button
-            onClick={nextStep}
+            onClick={handleContinue}
             className="w-full h-16 rounded-2xl font-bold text-lg bg-[#1B4965] text-white"
           >
             Continue

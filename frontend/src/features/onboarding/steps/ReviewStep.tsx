@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { Button } from "../../../app/components/ui/button";
-import { CheckCircle2, Loader2, Info } from "lucide-react";
-import { api } from "../../../services/api";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { apiService } from "../../../services/api";
 
 export function ReviewStep() {
-  const { data, nextStep } = useOnboardingStore();
+  const { data, syncWithBackend } = useOnboardingStore();
   const setAuth = useAuthStore((s) => s.setAuth);
   const auth = useAuthStore();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -15,24 +15,20 @@ export function ReviewStep() {
   const handleRegister = async () => {
     setIsRegistering(true);
     try {
-      const response = await api.post("/workers/register", {
-        platform: data.platform,
-        zone: data.zone,
-        income_band: data.incomeBand
-      });
+      const response = await apiService.worker.register();
       
       const resData = response.data.data;
-      setWorkerId(resData.workerId);
+      setWorkerId(resData.worker_id);
       
       // Update auth store with worker_id and registered status
       setAuth({
         token: auth.token!,
-        isRegistered: true,
-        hasMpin: auth.hasMpin,
-        workerId: resData.workerId
+        is_registered: true,
+        has_mpin: auth.hasMpin,
+        worker_id: resData.worker_id
       });
       
-      setTimeout(nextStep, 2000);
+      await syncWithBackend();
     } catch {
        // Error handled by interceptor
     } finally {

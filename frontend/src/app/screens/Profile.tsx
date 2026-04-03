@@ -8,9 +8,28 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { useNavigate } from "react-router";
+import { useAuthStore } from "../../store/useAuthStore";
+import { useOnboardingStore } from "../../store/useOnboardingStore";
+import { apiService } from "../../services/api";
 
 export function Profile() {
+  const navigate = useNavigate();
+  const { phone, logout: authLogout } = useAuthStore();
+  const { data, reset: onboardingReset } = useOnboardingStore();
+
+  const handleLogout = async () => {
+    try {
+      await apiService.auth.logout();
+    } catch {
+      // Ignore logout errors
+    } finally {
+      authLogout();
+      onboardingReset();
+      navigate("/login");
+    }
+  };
+
   return (
     <MobileContainer hasBottomNav>
       <div className="px-6 py-8">
@@ -26,7 +45,7 @@ export function Profile() {
               </div>
               <div>
                 <h2 className="font-bold text-lg">Delivery Rider</h2>
-                <p className="text-sm text-muted-foreground">+91 98765 43210</p>
+                <p className="text-sm text-muted-foreground">{phone || "+91 98765 43210"}</p>
               </div>
             </div>
             <div className="flex items-center justify-between pt-4 border-t border-border/50">
@@ -55,7 +74,7 @@ export function Profile() {
                   <div className="text-left">
                     <div className="font-medium">Work Location</div>
                     <div className="text-sm text-muted-foreground">
-                      Anna Nagar, Chennai
+                      {data.zone || "Anna Nagar"}, {data.city || "Chennai"}
                     </div>
                   </div>
                 </div>
@@ -68,7 +87,7 @@ export function Profile() {
                   <div className="text-left">
                     <div className="font-medium">Platforms</div>
                     <div className="text-sm text-muted-foreground">
-                      Swiggy, Zomato
+                      {data.platform || "Swiggy, Zomato"}
                     </div>
                   </div>
                 </div>
@@ -87,7 +106,7 @@ export function Profile() {
                   <div className="text-left">
                     <div className="font-medium">UPI ID</div>
                     <div className="text-sm text-muted-foreground">
-                      rider@paytm
+                      {data.upiId || "rider@paytm"}
                     </div>
                   </div>
                 </div>
@@ -110,7 +129,10 @@ export function Profile() {
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
               <div className="h-px bg-border" />
-              <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors text-destructive">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors text-destructive"
+              >
                 <div className="flex items-center gap-3">
                   <LogOut className="w-5 h-5" />
                   <div className="text-left">

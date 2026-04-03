@@ -1,9 +1,11 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { RouterProvider } from "react-router";
 import { router } from "./routes";
 import { Toaster } from "./components/ui/sonner";
 import { OfflineBanner } from "../components/common/OfflineBanner";
 import { ThemeProvider } from "next-themes";
+import { useAuthStore } from "../store/useAuthStore";
+import { useOnboardingStore } from "../store/useOnboardingStore";
 
 // ErrorBoundary — class component required by React
 class ErrorBoundary extends React.Component<
@@ -41,6 +43,15 @@ class ErrorBoundary extends React.Component<
 }
 
 export default function App() {
+  const { isAuthenticated, token } = useAuthStore();
+  const syncWithBackend = useOnboardingStore((s) => s.syncWithBackend);
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      syncWithBackend();
+    }
+  }, [isAuthenticated, token, syncWithBackend]);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <div className="dark">

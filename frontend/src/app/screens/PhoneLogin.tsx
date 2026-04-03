@@ -13,8 +13,9 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { authService } from "../../services/authService";
+import { apiService } from "../../services/api";
 import { useAuthStore } from "../../store/useAuthStore";
+import { useOnboardingStore } from "../../store/useOnboardingStore";
 import { toast } from "sonner";
 
 /* ─────────────────────────────────────────
@@ -76,7 +77,7 @@ function PhoneStep({
     if (phone.length !== 10) return;
     setLoading(true);
     try {
-      await authService.sendOtp(phone);
+      await apiService.auth.sendOtp(phone);
       onDone(phone);
     } catch {
       // Handled by API interceptor
@@ -190,8 +191,10 @@ function OTPStep({
   const submit = async (code: string) => {
     setLoading(true);
     try {
-      const res = await authService.verifyOtp(phone, code);
-      onDone(res);
+      const res = await apiService.auth.verifyOtp(phone, code);
+      if (res.data.status === "SUCCESS") {
+        onDone(res.data.data);
+      }
     } catch {
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => refs.current[0]?.focus(), 50);
@@ -238,7 +241,7 @@ function OTPStep({
           </div>
 
           <button
-            onClick={() => authService.sendOtp(phone)}
+            onClick={() => apiService.auth.sendOtp(phone)}
             className="text-[#62B6CB] font-bold text-sm hover:text-[#5FA8D3] transition-colors flex items-center justify-center gap-1 mx-auto"
           >
             Didn't receive code? <span className="underline underline-offset-4">Resend</span>
@@ -291,8 +294,10 @@ function MPINStep({
     if (next.length === 4) {
       setLoading(true);
       try {
-        const res = await authService.loginMpin(phone, next.join(""));
-        onDone(res);
+        const res = await apiService.auth.loginMpin(phone, next.join(""));
+        if (res.data.status === "SUCCESS") {
+          onDone(res.data.data);
+        }
       } catch {
         setShaking(true);
         setTimeout(() => setShaking(false), 500);
@@ -368,6 +373,7 @@ function MPINStep({
 export function PhoneLogin() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const syncOnboarding = useOnboardingStore((s) => s.syncWithBackend);
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhoneLocal] = useState("");
@@ -377,17 +383,19 @@ export function PhoneLogin() {
     setStep("otp");
   };
 
-  const handleOTPDone = (data: any) => {
-    if (data.isRegistered && data.hasMpin) {
+  const handleOTPDone = async (data: any) => {
+    setAuth({ ...data, phone });
+    if (data.is_registered && data.has_mpin) {
       setStep("mpin");
     } else {
-      setAuth({ ...data, phone });
+      await syncOnboarding();
       navigate("/onboarding");
     }
   };
 
-  const handleMPINDone = (data: any) => {
+  const handleMPINDone = async (data: any) => {
     setAuth({ ...data, phone });
+    await syncOnboarding();
     setStep("loading");
     setTimeout(() => navigate("/dashboard"), 1500);
   };

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { makePersistConfig } from "./middleware/persist";
+import { apiService } from "../services/api";
 
 export interface OnboardingData {
   // Step 1: Consent
@@ -49,6 +50,7 @@ interface OnboardingState {
   updateData: (partialData: Partial<OnboardingData>) => void;
   complete: () => void;
   reset: () => void;
+  syncWithBackend: () => Promise<void>;
 }
 
 const initialData: OnboardingData = {
@@ -67,9 +69,25 @@ const initialData: OnboardingData = {
   upiId: "",
 };
 
+const BACKEND_STATE_TO_STEP: Record<string, number> = {
+  "INIT": 1,
+  "PHONE_VERIFIED": 1,
+  "PERMISSIONS_COMPLETED": 2,
+  "AADHAAR_OTP_SENT": 4,
+  "AADHAAR_LINKED": 5,
+  "SELFIE_VERIFIED": 6,
+  "LOCATION_CAPTURED": 7,
+  "WORK_PROFILE_COMPLETED": 8,
+  "UPI_CONFIGURED": 9,
+  "WORKER_REGISTERED": 10,
+  "MPIN_SET": 11,
+  "INSURANCE_ACKNOWLEDGED": 12,
+  "READY": 12
+};
+
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       currentStep: 1,
       data: initialData,
       isComplete: false,
@@ -92,8 +110,32 @@ export const useOnboardingStore = create<OnboardingState>()(
       complete: () => set({ isComplete: true }),
 
       reset: () => set({ currentStep: 1, data: initialData, isComplete: false }),
+
+      syncWithBackend: async () => {
+        try {
+          const res = await apiService.auth.getOnboardingStatus();
+          if (res.data.status === "SUCCESS") {
+            const { onboarding_state, can_activate_policy } = res.data.data;
+            const step = BACKEND_STATE_TO_STEP[onboarding_state] || 1;
+            
+            // If we are at step 2 or 3, we don't want to jump back from 3 to 2 if backend is at PERMISSIONS_COMPLETED
+            // because step 3 is local to frontend.
+            if (step === 2 && get().currentStep === 3) {
+              return;
+            }
+
+            if (step > 11 || can_activate_policy) {
+              set({ isComplete: true, currentStep: 11 });
+            } else {
+              set({ currentStep: step });
+            }
+          }
+        } catch (error) {
+          console.error("Onboarding sync failed", error);
+        }
+      }
     }),
-    makePersistConfig<OnboardingState>("onboarding", 2, (state) => ({
+    makePersistConfig<OnboardingState>("onboarding", 4, (state) => ({
       currentStep: state.currentStep,
       data: state.data,
       isComplete: state.isComplete,

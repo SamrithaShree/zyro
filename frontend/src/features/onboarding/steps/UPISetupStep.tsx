@@ -1,14 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { Button } from "../../../app/components/ui/button";
 import { Input } from "../../../app/components/ui/input";
-import { Wallet } from "lucide-react";
+import { Wallet, Loader2 } from "lucide-react";
+import { apiService } from "../../../services/api";
 
 export function UPISetupStep() {
-  const { data, updateData, nextStep } = useOnboardingStore();
+  const { data, updateData, syncWithBackend } = useOnboardingStore();
+  const [loading, setLoading] = useState(false);
 
   // Basic UPI ID validation
   const isComplete = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(data.upiId);
+
+  const handleVerify = async () => {
+    setLoading(true);
+    try {
+      await apiService.worker.configureUpi(data.upiId);
+      await syncWithBackend();
+    } catch (err) {
+      // Handled by interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col">
@@ -45,11 +59,11 @@ export function UPISetupStep() {
       </div>
 
       <Button
-        onClick={nextStep}
-        disabled={!isComplete}
+        onClick={handleVerify}
+        disabled={!isComplete || loading}
         className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-8 shadow-lg shadow-[#62B6CB]/20"
       >
-        Verify UPI ID
+        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Verify UPI ID"}
       </Button>
     </div>
   );

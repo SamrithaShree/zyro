@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { Button } from "../../../app/components/ui/button";
-import { authService } from "../../../services/authService";
+import { apiService } from "../../../services/api";
 import { Loader2, Delete } from "lucide-react";
 import { motion } from "motion/react";
 
 const KEYPAD = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["", "0", "⌫"]];
 
 export function MPinSetupStep() {
-  const { nextStep } = useOnboardingStore();
+  const { syncWithBackend } = useOnboardingStore();
   const setAuth = useAuthStore((s) => s.setAuth);
   const auth = useAuthStore();
   
@@ -51,14 +51,14 @@ export function MPinSetupStep() {
   const submit = async (mpin: string) => {
     setLoading(true);
     try {
-      await authService.setMpin(mpin);
+      await apiService.auth.setMpin(mpin);
       setAuth({
         token: auth.token!,
-        isRegistered: auth.isRegistered,
-        hasMpin: true,
-        workerId: auth.workerId
+        is_registered: auth.isRegistered,
+        has_mpin: true,
+        worker_id: auth.workerId
       });
-      nextStep();
+      await syncWithBackend();
     } catch {
        setConfirmPin([]);
        setIsConfirming(false);

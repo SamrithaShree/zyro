@@ -4,29 +4,38 @@ import { Button } from "../../../app/components/ui/button";
 import { Input } from "../../../app/components/ui/input";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { apiService } from "../../../services/api";
 
 export function AadhaarStep() {
-  const { data, updateData, nextStep } = useOnboardingStore();
+  const { data, updateData, syncWithBackend } = useOnboardingStore();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [otp, setOtp] = useState("");
   const [showOtp, setShowOtp] = useState(false);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      await apiService.auth.sendAadhaarOtp(data.aadhaarNumber);
       setShowOtp(true);
-    }, 1500);
+    } catch (error) {
+      // Handled by interceptor
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleOtpSubmit = () => {
+  const handleOtpSubmit = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      await apiService.auth.verifyAadhaarOtp(otp);
       setIsVerified(true);
-      setTimeout(nextStep, 1000);
-    }, 1500);
+      await syncWithBackend();
+    } catch (error) {
+      // Handled by interceptor
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const isComplete = data.aadhaarNumber.length === 12;

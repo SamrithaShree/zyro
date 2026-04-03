@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { Button } from "../../../app/components/ui/button";
+import { apiService } from "../../../services/api";
+import { Loader2 } from "lucide-react";
 
 const INCOME_BANDS = [
   "Less than ₹3,000",
@@ -13,8 +15,35 @@ const INCOME_BANDS = [
 
 const PEAK_HOURS = ["Morning", "Afternoon", "Evening", "Late Night"];
 
+const INCOME_MAPPING: Record<string, string> = {
+  "Less than ₹3,000": "< 3,000",
+  "₹3,000 - ₹5,000": "3,000 - 5,000",
+  "₹5,000 - ₹7,000": "5,000 - 7,000",
+  "₹7,000 - ₹9,000": "7,000 - 9,000",
+  "₹9,000 - ₹12,000": "9,000+",
+  "More than ₹12,000": "9,000+"
+};
+
 export function WorkDetailsStep() {
-  const { data, updateData, nextStep } = useOnboardingStore();
+  const { data, updateData, syncWithBackend } = useOnboardingStore();
+  const [loading, setLoading] = useState(false);
+
+  const handleContinue = async () => {
+    setLoading(true);
+    try {
+      await apiService.worker.saveWorkProfile({
+        platform: data.platform || "Other",
+        working_hours_per_day: parseInt(data.workingHoursPerDay),
+        days_worked_per_week: parseInt(data.daysPerWeek),
+        income_band: INCOME_MAPPING[data.incomeBand] || "3,000 - 5,000"
+      });
+      await syncWithBackend();
+    } catch (err) {
+      // Handled by interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col">
@@ -81,10 +110,11 @@ export function WorkDetailsStep() {
       </div>
 
       <Button
-        onClick={nextStep}
+        onClick={handleContinue}
+        disabled={loading || !data.incomeBand || !data.peakHours}
         className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-8"
       >
-        Continue
+        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue"}
       </Button>
     </div>
   );

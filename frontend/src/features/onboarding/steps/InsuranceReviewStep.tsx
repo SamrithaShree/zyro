@@ -2,15 +2,25 @@ import { useState, useEffect } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
 import { Button } from "../../../app/components/ui/button";
 import { Checkbox } from "../../../app/components/ui/checkbox";
-import { ShieldCheck, Loader2, Info, ChevronRight } from "lucide-react";
-import { api } from "../../../services/api";
+import { Loader2, ChevronRight } from "lucide-react";
+import { apiService } from "../../../services/api";
 import { useNavigate } from "react-router";
+
+const INCOME_MAPPING: Record<string, string> = {
+  "Less than ₹3,000": "< 3,000",
+  "₹3,000 - ₹5,000": "3,000 - 5,000",
+  "₹5,000 - ₹7,000": "5,000 - 7,000",
+  "₹7,000 - ₹9,000": "7,000 - 9,000",
+  "₹9,000 - ₹12,000": "9,000+",
+  "More than ₹12,000": "9,000+"
+};
 
 export function InsuranceReviewStep() {
   const { data, complete } = useOnboardingStore();
   const navigate = useNavigate();
   const [quote, setQuote] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
   const [agreed, setAgreed] = useState({
     premium: false,
     coverage: false,
@@ -21,10 +31,10 @@ export function InsuranceReviewStep() {
   useEffect(() => {
     const fetchQuote = async () => {
       try {
-        const response = await api.post("/policies/quote", {
-          zone: data.zone,
-          income_band: data.incomeBand
-        });
+        const response = await apiService.policy.getQuote(
+          data.zone || "Anna Nagar",
+          INCOME_MAPPING[data.incomeBand] || "3,000 - 5,000"
+        );
         setQuote(response.data.data);
       } catch {
         // Handle error
@@ -35,9 +45,24 @@ export function InsuranceReviewStep() {
     fetchQuote();
   }, [data.zone, data.incomeBand]);
 
-  const handleFinish = () => {
-    complete();
-    navigate("/dashboard");
+  const handleFinish = async () => {
+    setActivating(true);
+    try {
+      await apiService.policy.acknowledge({
+        premium_acknowledged: agreed.premium,
+        coverage_acknowledged: agreed.coverage,
+        exclusions_acknowledged: agreed.exclusions,
+        terms_accepted: agreed.terms,
+        privacy_accepted: true
+      });
+      await apiService.policy.activate();
+      complete();
+      navigate("/dashboard");
+    } catch (err) {
+      // Handled by interceptor
+    } finally {
+      setActivating(false);
+    }
   };
 
   const isComplete = agreed.premium && agreed.coverage && agreed.exclusions && agreed.terms;
@@ -110,10 +135,10 @@ export function InsuranceReviewStep() {
 
       <Button
         onClick={handleFinish}
-        disabled={!isComplete}
+        disabled={!isComplete || activating}
         className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-4 shadow-lg shadow-[#62B6CB]/20"
       >
-        Activate & Go to Dashboard
+        {activating ? <Loader2 className="w-6 h-6 animate-spin" /> : "Activate & Go to Dashboard"}
       </Button>
     </div>
   );
