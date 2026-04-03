@@ -3,7 +3,7 @@ import { MobileContainer } from "../components/MobileContainer";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { ShieldCheck, Zap, ArrowRight, Smartphone } from "lucide-react";
+import { ShieldCheck, Zap, ArrowRight, Smartphone, LogIn } from "lucide-react";
 
 /* ─────────────────────────────────────────
    Palette Usage (Phase 2)
@@ -94,12 +94,14 @@ export function Welcome() {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
              </Button>
 
-             <button
+             <Button
                onClick={() => navigate("/login")}
-               className="w-full py-2 text-center text-[#1B4965] font-bold text-sm uppercase tracking-widest hover:opacity-70 transition-opacity"
+               variant="outline"
+               className="w-full h-16 rounded-2xl border-2 border-[#1B4965] bg-white/50 text-[#1B4965] font-black text-lg flex items-center justify-center gap-2 hover:bg-white/80 transition-all shadow-sm"
              >
-                Already have an account? Sign In
-             </button>
+                <LogIn className="w-5 h-5" />
+                Sign In
+             </Button>
 
              <p className="text-center text-[10px] text-[#1B4965]/40 font-bold uppercase tracking-widest pt-2">
                 Trusted by 12,000+ Delivery Partners
