@@ -18,18 +18,14 @@ export function Welcome() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-            className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center shadow-[0_12px_40px_rgba(27,73,101,0.1)] border-2 border-white"
+            className="flex flex-col items-center"
           >
-<<<<<<< HEAD
             <div className="w-24 h-24 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border-4 border-[#62B6CB]/20 mb-4 overflow-hidden">
                <img src="/assets/zyro-logo.svg" alt="Zyro" className="w-16 h-16 object-contain" />
             </div>
             <div className="bg-[#1B4965] px-3 py-1 rounded-full text-[8px] font-black text-white tracking-[0.2em] uppercase">
                NULL POINTERS PRESENTS
             </div>
-=======
-            <img src="/assets/zyro-logo.png" alt="Zyro" className="w-16 h-16 object-contain" />
->>>>>>> b456267 (feat: update frontend ui)
           </motion.div>
 
           {/* Text Section */}
