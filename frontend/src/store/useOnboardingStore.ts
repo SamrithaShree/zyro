@@ -66,7 +66,7 @@ const initialData: OnboardingData = {
   daysPerWeek: "6",
   dailyIncome: "800",
   weeklyIncome: "5000",
-  incomeBand: "5000",
+  incomeBand: "5,000 - 7,000",
   upiId: "",
 };
 

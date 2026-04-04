@@ -3,9 +3,20 @@ import { useNavigate } from "react-router";
 import { StickyCTA } from "../../design-system/layouts/StickyCTA";
 import { Button } from "../../design-system/components/Button";
 import { motion } from "motion/react";
+import { useAuthStore } from "../../store/useAuthStore";
+import { toast } from "sonner";
 
 export function Welcome() {
   const navigate = useNavigate();
+  const { hasMpin } = useAuthStore();
+
+  const handleSignIn = () => {
+    if (hasMpin) {
+      navigate("/mpin-login");
+    } else {
+      toast.error("Please complete signup first");
+    }
+  };
 
   return (
     <div className="zyro-root font-sans">
@@ -76,9 +87,9 @@ export function Welcome() {
 
         <StickyCTA className="bg-transparent shadow-none">
           <Button onClick={() => navigate("/login")}>
-            Get Protected Now
+            Get Started
           </Button>
-          <Button variant="secondary" onClick={() => navigate("/login")}>
+          <Button variant="secondary" onClick={handleSignIn}>
             Sign In
           </Button>
         </StickyCTA>

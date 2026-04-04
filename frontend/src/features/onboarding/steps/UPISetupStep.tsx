@@ -23,7 +23,6 @@ export function UPISetupStep() {
       await apiService.worker.configureUpi(data.upiId);
       await syncWithBackend();
       toast.success("Payout ID linked");
-      nextStep();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to link UPI");
     } finally {

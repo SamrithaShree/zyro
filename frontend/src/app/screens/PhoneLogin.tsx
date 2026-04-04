@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useOnboardingStore } from "../../store/useOnboardingStore";
@@ -13,7 +13,7 @@ type LoginStep = "phone" | "otp";
 
 export function PhoneLogin() {
   const navigate = useNavigate();
-  const { otpVerified, isRegistered, hasMpin, setAuth } = useAuthStore();
+  const { setAuth } = useAuthStore();
   const syncOnboarding = useOnboardingStore((s) => s.syncWithBackend);
   
   const [step, setStep] = useState<LoginStep>("phone");
@@ -21,17 +21,6 @@ export function PhoneLogin() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Auto-redirect if already authenticated via OTP
-  useEffect(() => {
-    if (otpVerified && !loading) {
-      if (isRegistered && hasMpin) {
-        navigate("/mpin-login", { replace: true });
-      } else {
-        navigate("/onboarding", { replace: true });
-      }
-    }
-  }, [otpVerified, isRegistered, hasMpin, navigate, loading]);
 
   // Focus ring class from design system
   const focusClass = "focus:ring-2 focus:ring-[#62B6CB] focus:ring-offset-2 outline-none transition-all";
@@ -69,10 +58,18 @@ export function PhoneLogin() {
       const res = await apiService.auth.verifyOtp(phone, otp);
       if (res.data.status === "SUCCESS") {
         const authData = res.data.data;
-        // setAuth will trigger the useEffect for navigation
+        // setAuth updates the store
         setAuth({ ...authData, phone });
         await syncOnboarding();
+        
         toast.success("Identity verified");
+
+        // Explicit navigation based on registration status (PUSH, NO REPLACE)
+        if (authData.is_registered && authData.has_mpin) {
+          navigate("/mpin-login");
+        } else {
+          navigate("/onboarding");
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid OTP");

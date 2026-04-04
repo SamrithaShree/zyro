@@ -9,10 +9,11 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 
 const INCOME_BANDS = [
-  { label: "Low", range: "< ₹3,000", value: "3000" },
-  { label: "Medium", range: "₹3,000 - ₹7,000", value: "5000" },
-  { label: "High", range: "₹7,000 - ₹12,000", value: "9000" },
-  { label: "Pro", range: "> ₹12,000", value: "12000" }
+  { label: "Tier 1", range: "< 3,000", value: "< 3,000" },
+  { label: "Tier 2", range: "3,000 - 5,000", value: "3,000 - 5,000" },
+  { label: "Tier 3", range: "5,000 - 7,000", value: "5,000 - 7,000" },
+  { label: "Tier 4", range: "7,000 - 9,000", value: "7,000 - 9,000" },
+  { label: "Tier 5", range: "9,000+", value: "9,000+" }
 ];
 
 export function WorkDetailsStep() {
@@ -28,6 +29,7 @@ export function WorkDetailsStep() {
   }, [data.dailyIncome, data.daysPerWeek]);
 
   const handleContinue = async () => {
+    console.log("INCOME BAND SENT:", data.incomeBand);
     setLoading(true);
     try {
       await apiService.worker.saveWorkProfile({
@@ -37,7 +39,6 @@ export function WorkDetailsStep() {
         income_band: data.incomeBand
       });
       await syncWithBackend();
-      nextStep();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save work profile");
     } finally {
@@ -101,13 +102,16 @@ export function WorkDetailsStep() {
             {INCOME_BANDS.map((band) => (
               <SelectionCard
                 key={band.label}
-                selected={data.incomeBand === band.value}
-                onClick={() => updateData({ incomeBand: band.value })}
+                selected={data.incomeBand === band.range}
+                onClick={() => {
+                  console.log("SELECTED OPTION:", band.range);
+                  updateData({ incomeBand: band.range });
+                }}
                 className="py-4 px-4"
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[14px] font-bold">{band.label}</span>
-                  <span className={`text-[10px] font-medium ${data.incomeBand === band.value ? 'text-white/70' : 'text-[#1B4965]/50'}`}>{band.range}</span>
+                  <span className={`text-[10px] font-medium ${data.incomeBand === band.range ? 'text-white/70' : 'text-[#1B4965]/50'}`}>{band.range}</span>
                 </div>
               </SelectionCard>
             ))}

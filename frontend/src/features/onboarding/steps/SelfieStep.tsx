@@ -69,7 +69,7 @@ export function SelfieStep() {
                   className="absolute left-0 right-0 h-1 bg-[#62B6CB] shadow-[0_0_15px_#62B6CB] z-10"
                 />
                 <div className="text-[#62B6CB] opacity-40">
-                  <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2  12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 </div>
               </motion.div>
             )}
@@ -114,8 +114,8 @@ export function SelfieStep() {
             {status === "scanning" ? "Scanning..." : "Start Biometric Scan"}
           </Button>
         ) : (
-          <Button onClick={nextStep}>
-            Continue
+          <Button onClick={() => {}}>
+            Proceeding...
           </Button>
         )}
       </StickyCTA>

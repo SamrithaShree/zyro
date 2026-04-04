@@ -14,29 +14,75 @@ export function InsuranceReviewStep() {
   const [loading, setLoading] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [quote, setQuote] = useState<any>(null);
 
-  // Mock calculated values based on income band
-  const premium = (parseInt(data.incomeBand) * 0.015).toFixed(0);
-  const cap = (parseInt(data.incomeBand) * 0.1).toFixed(0);
+  React.useEffect(() => {
+    const fetchQuote = async () => {
+      try {
+        const res = await apiService.policy.getQuote(data.zone || "", data.incomeBand || "");
+        if (res.data.status === "SUCCESS") {
+          const plans = res.data.data.plans;
+          const standardPlan = plans.find((p: any) => p.tier === "Standard") || plans[0];
+          setQuote(standardPlan);
+        }
+      } catch (err) {
+        console.error("Failed to fetch quote", err);
+      }
+    };
+    fetchQuote();
+  }, [data.zone, data.incomeBand]);
+
+  // Use quote values or fallbacks
+  const premium = quote ? quote.premium_amount : "49";
+  const cap = quote ? quote.weekly_cap : "2000";
+  const tier = quote ? quote.tier : "Standard";
 
   const handleActivate = async () => {
     if (!accepted) return;
     
     setLoading(true);
+
     try {
-      await apiService.policy.acknowledge({
+      // Guard: Check if already complete or READY to avoid invalid transition error
+      const statusRes = await apiService.auth.getOnboardingStatus();
+      if (statusRes.data.status === "SUCCESS") {
+        const { onboarding_state } = statusRes.data.data;
+        if (onboarding_state === "READY") {
+          console.log("Onboarding already READY, skipping transitions");
+          await syncWithBackend();
+          complete();
+          navigate("/dashboard");
+          return;
+        }
+      }
+
+      const ackPayload = {
         premium_acknowledged: true,
         coverage_acknowledged: true,
         exclusions_acknowledged: true,
         terms_accepted: true,
         privacy_accepted: true
-      });
-      await apiService.policy.activate();
+      };
+
+      console.log("ACK PAYLOAD:", ackPayload);
+      await apiService.policy.acknowledge(ackPayload);
+      
+      const activatePayload = { tier: "Standard" }; // Defaulting to Standard for Phase 2 prototype
+      console.log("ACTIVATE PAYLOAD:", activatePayload);
+      
+      await apiService.policy.activate(activatePayload);
       await syncWithBackend();
       complete();
       toast.success("Protection Activated!");
       navigate("/dashboard");
     } catch (err: any) {
+      // If the error is specifically about the transition, we might still want to proceed to dashboard
+      if (err.response?.data?.message?.includes("Invalid onboarding transition")) {
+        console.warn("Transition error, but state might be advanced. Syncing and exiting.");
+        await syncWithBackend();
+        navigate("/dashboard");
+        return;
+      }
       toast.error(err.response?.data?.message || "Activation failed");
     } finally {
       setLoading(false);

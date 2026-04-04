@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../../store/useAuthStore";
 import { apiService } from "../../services/api";
@@ -10,22 +10,28 @@ import { motion } from "motion/react";
 
 export function MPinLogin() {
   const navigate = useNavigate();
-  const { phone, setAuth } = useAuthStore();
+  const { phone, setAuth, hasMpin } = useAuthStore();
+  
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
+  useEffect(() => {
+    if (!hasMpin || !phone) {
+      toast.error("Please complete signup first");
+      navigate("/", { replace: true });
+    }
+  }, [hasMpin, phone, navigate]);
+
   const focusClass = "focus:ring-2 focus:ring-[#62B6CB] focus:ring-offset-2 outline-none transition-all";
 
-  const [loginSuccess, setLoginSuccess] = useState(false);
-
-  useEffect(() => {
-    if (loginSuccess) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [loginSuccess, navigate]);
-
   const handleLogin = async () => {
+    if (!phone) {
+      toast.error("Please complete signup first");
+      navigate("/", { replace: true });
+      return;
+    }
+    
     if (pin.length !== 4) return;
 
     setLoading(true);
@@ -35,7 +41,7 @@ export function MPinLogin() {
       if (res.data.status === "SUCCESS") {
         setAuth({ ...res.data.data, phone });
         toast.success("Welcome back");
-        setLoginSuccess(true);
+        navigate("/dashboard", { replace: true });
       }
     } catch (err: any) {
       setError(true);
@@ -51,8 +57,8 @@ export function MPinLogin() {
       step={1}
       totalSteps={1}
       title="Enter mPIN"
-      subtext="Enter your 4-digit security PIN to access your account."
-      onBack={() => navigate("/login")}
+      subtext={`Verify security for +91 ${phone || '—'}`}
+      onBack={() => navigate("/")}
     >
       <div className="space-y-8">
         <motion.div
@@ -60,6 +66,7 @@ export function MPinLogin() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          {/* mPIN Input - ONLY UI ELEMENT */}
           <div className="flex justify-center gap-4">
             {[...Array(4)].map((_, i) => (
               <input

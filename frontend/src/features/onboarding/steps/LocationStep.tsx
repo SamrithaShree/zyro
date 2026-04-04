@@ -66,7 +66,6 @@ export function LocationStep() {
         zone: data.zone
       });
       await syncWithBackend();
-      nextStep();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save location");
     } finally {

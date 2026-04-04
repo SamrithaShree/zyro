@@ -119,7 +119,7 @@ export const apiService = {
     acknowledge: (payload: { premium_acknowledged: boolean; coverage_acknowledged: boolean; exclusions_acknowledged: boolean; terms_accepted: boolean; privacy_accepted: boolean }) =>
       api.post<GenericResponse>("/policies/acknowledge", payload),
     
-    activate: () =>
-      api.post<GenericResponse>("/policies/activate"),
+    activate: (payload: { tier: string }) =>
+      api.post<GenericResponse>("/policies/activate", payload),
   }
 };

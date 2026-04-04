@@ -20,12 +20,14 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   const currentPath = location.pathname;
 
-  // 1. Not verified at all -> must be on /login (or /)
-  if (!otpVerified) {
-    if (currentPath !== "/login" && currentPath !== "/") {
-      return <Navigate to="/login" replace />;
-    }
+  // ALWAYS allow access to root, login, and mpin-login paths to ensure they are the entry points
+  if (currentPath === "/" || currentPath === "/login" || currentPath === "/mpin-login") {
     return <>{children}</>;
+  }
+
+  // 1. Not verified at all -> must be on /login (already handled above, but keeping for other paths)
+  if (!otpVerified) {
+    return <Navigate to="/login" replace />;
   }
 
   // 2. Verified, but not registered -> must go to /onboarding
@@ -73,8 +75,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
      return <>{children}</>;
   }
 
-  // If fully complete and trying to access login/onboarding, redirect to dashboard
-  if (currentPath === "/login" || currentPath === "/" || currentPath === "/onboarding" || currentPath === "/mpin-setup") {
+  // If fully complete and trying to access mpin-setup, redirect to dashboard
+  if (currentPath === "/mpin-setup") {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router";
 import { useOnboardingStore } from "../../store/useOnboardingStore";
 import { motion, AnimatePresence } from "motion/react";
 import { StepContainer } from "../../design-system/layouts/StepContainer";
@@ -25,6 +26,7 @@ const PlaceholderStep = ({ name }: { name: string }) => (
 const TOTAL_STEPS = 10;
 
 export function OnboardingFlow() {
+  const navigate = useNavigate();
   const { currentStep, prevStep } = useOnboardingStore();
 
   const renderStep = () => {
@@ -61,11 +63,19 @@ export function OnboardingFlow() {
 
   const header = getStepHeader();
 
+  const handleBack = () => {
+    if (currentStep === 1) {
+      navigate(-1);
+    } else {
+      prevStep();
+    }
+  };
+
   return (
     <StepContainer
       step={currentStep}
       totalSteps={TOTAL_STEPS}
-      onBack={currentStep > 1 ? prevStep : undefined}
+      onBack={handleBack}
       title={header.title}
       subtext={header.subtext}
     >
