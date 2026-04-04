@@ -7,6 +7,7 @@ import { StickyCTA } from "../../design-system/layouts/StickyCTA";
 import { Button } from "../../design-system/components/Button";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+import "../../design-system/styles/atmosphere.css";
 
 export function MPinLogin() {
   const navigate = useNavigate();
@@ -56,8 +57,8 @@ export function MPinLogin() {
     <StepContainer
       step={1}
       totalSteps={1}
-      title="Enter mPIN"
-      subtext={`Verify security for +91 ${phone || '—'}`}
+      title="Access Key"
+      subtext={`Authorize session for +91 ${phone || '—'}`}
       onBack={() => navigate("/")}
     >
       <div className="space-y-8">
@@ -66,7 +67,7 @@ export function MPinLogin() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          {/* mPIN Input - ONLY UI ELEMENT */}
+          {/* mPIN Input */}
           <div className="flex justify-center gap-4">
             {[...Array(4)].map((_, i) => (
               <input
@@ -115,7 +116,7 @@ export function MPinLogin() {
               onClick={() => navigate("/login")}
               className="text-[#62B6CB] font-bold text-sm hover:opacity-80 transition-opacity underline underline-offset-4"
             >
-              Forgot mPIN?
+              Forgot mPIN? Use OTP
             </button>
           </div>
         </motion.div>
