@@ -4,9 +4,10 @@ import { makePersistConfig } from "./middleware/persist";
 
 interface AuthState {
   phone: string;
-  isAuthenticated: boolean;
+  otpVerified: boolean;
   isRegistered: boolean;
   hasMpin: boolean;
+  onboardingComplete: boolean;
   token: string | null;
   workerId: string | null;
   trustScore: number;
@@ -20,6 +21,8 @@ interface AuthState {
     worker_id: string | null;
     phone?: string;
   }) => void;
+  setOnboardingComplete: (status: boolean) => void;
+  setHasMpin: (status: boolean) => void;
   setTrustScore: (score: number) => void;
   logout: () => void;
 }
@@ -28,9 +31,10 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       phone: "",
-      isAuthenticated: false,
+      otpVerified: false,
       isRegistered: false,
       hasMpin: false,
+      onboardingComplete: false,
       token: null,
       workerId: null,
       trustScore: 78,
@@ -40,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
 
       setAuth: (data) =>
         set({
-          isAuthenticated: true,
+          otpVerified: true,
           token: data.token,
           isRegistered: data.is_registered,
           hasMpin: data.has_mpin,
@@ -48,13 +52,17 @@ export const useAuthStore = create<AuthState>()(
           phone: data.phone || undefined,
         }),
 
+      setOnboardingComplete: (status) => set({ onboardingComplete: status }),
+      setHasMpin: (status) => set({ hasMpin: status }),
+
       setTrustScore: (trustScore) => set({ trustScore }),
 
       logout: () =>
         set({
-          isAuthenticated: false,
+          otpVerified: false,
           isRegistered: false,
           hasMpin: false,
+          onboardingComplete: false,
           token: null,
           workerId: null,
           phone: "",
@@ -62,11 +70,12 @@ export const useAuthStore = create<AuthState>()(
           name: "Rider",
         }),
     }),
-    makePersistConfig<AuthState>("auth", 2, (state) => ({
+    makePersistConfig<AuthState>("auth", 4, (state) => ({
       phone: state.phone,
-      isAuthenticated: state.isAuthenticated,
+      otpVerified: state.otpVerified,
       isRegistered: state.isRegistered,
       hasMpin: state.hasMpin,
+      onboardingComplete: state.onboardingComplete,
       token: state.token,
       workerId: state.workerId,
       trustScore: state.trustScore,
@@ -74,3 +83,4 @@ export const useAuthStore = create<AuthState>()(
     }))
   )
 );
+

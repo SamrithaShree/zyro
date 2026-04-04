@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { makePersistConfig } from "./middleware/persist";
 import { apiService } from "../services/api";
+import { useAuthStore } from "./useAuthStore";
 
 export interface OnboardingData {
   // Step 1: Consent
@@ -65,7 +66,7 @@ const initialData: OnboardingData = {
   daysPerWeek: "6",
   dailyIncome: "800",
   weeklyIncome: "5000",
-  incomeBand: "5000-7000",
+  incomeBand: "5000",
   upiId: "",
 };
 
@@ -107,9 +108,15 @@ export const useOnboardingStore = create<OnboardingState>()(
           data: { ...state.data, ...partialData },
         })),
 
-      complete: () => set({ isComplete: true }),
+      complete: () => {
+        set({ isComplete: true });
+        useAuthStore.getState().setOnboardingComplete(true);
+      },
 
-      reset: () => set({ currentStep: 1, data: initialData, isComplete: false }),
+      reset: () => {
+        set({ currentStep: 1, data: initialData, isComplete: false });
+        useAuthStore.getState().setOnboardingComplete(false);
+      },
 
       syncWithBackend: async () => {
         try {
@@ -118,16 +125,16 @@ export const useOnboardingStore = create<OnboardingState>()(
             const { onboarding_state, can_activate_policy } = res.data.data;
             const step = BACKEND_STATE_TO_STEP[onboarding_state] || 1;
             
-            // If we are at step 2 or 3, we don't want to jump back from 3 to 2 if backend is at PERMISSIONS_COMPLETED
-            // because step 3 is local to frontend.
             if (step === 2 && get().currentStep === 3) {
               return;
             }
 
             if (step > 11 || can_activate_policy) {
               set({ isComplete: true, currentStep: 11 });
+              useAuthStore.getState().setOnboardingComplete(true);
             } else {
               set({ currentStep: step });
+              useAuthStore.getState().setOnboardingComplete(false);
             }
           }
         } catch (error) {
@@ -135,7 +142,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         }
       }
     }),
-    makePersistConfig<OnboardingState>("onboarding", 4, (state) => ({
+    makePersistConfig<OnboardingState>("onboarding", 6, (state) => ({
       currentStep: state.currentStep,
       data: state.data,
       isComplete: state.isComplete,

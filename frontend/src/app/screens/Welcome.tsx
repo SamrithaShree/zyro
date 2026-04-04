@@ -1,127 +1,92 @@
-import { useEffect, useRef } from "react";
-import { MobileContainer } from "../components/MobileContainer";
-import { Button } from "../components/ui/button";
+import React from "react";
 import { useNavigate } from "react-router";
+import { StickyCTA } from "../../design-system/layouts/StickyCTA";
+import { Button } from "../../design-system/components/Button";
 import { motion } from "motion/react";
-import { ShieldCheck, Zap, ArrowRight, Smartphone, LogIn } from "lucide-react";
-import { useAuthStore } from "../../store/useAuthStore";
-
-/* ─────────────────────────────────────────
-   Palette Usage (Phase 2)
-   Background: #BEE9E8
-   Interactive: #62B6CB
-   Text: #1B4965
-   Secondary: #5FA8D3
-───────────────────────────────────────── */
 
 export function Welcome() {
   const navigate = useNavigate();
-  const { isAuthenticated, isRegistered } = useAuthStore();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      if (isRegistered) {
-        navigate("/dashboard");
-      } else {
-        navigate("/onboarding");
-      }
-    }
-  }, [isAuthenticated, isRegistered, navigate]);
 
   return (
-    <MobileContainer style={{ backgroundColor: "#BEE9E8" }}>
-      <div className="relative flex flex-col min-h-screen px-8 py-12 overflow-hidden">
-        
-        {/* Background Accents */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#62B6CB]/10 rounded-full blur-3xl -translate-y-20 translate-x-20" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#5FA8D3]/10 rounded-full blur-3xl translate-y-20 -translate-x-20" />
-
-        {/* Content */}
-        <div className="relative z-10 flex-1 flex flex-col">
-          
+    <div className="zyro-root font-sans">
+      <div className="zyro-atmosphere" />
+      
+      <div className="zyro-container px-4 sm:px-6 lg:px-8 pt-20 pb-32">
+        <div className="flex-1 flex flex-col items-center text-center space-y-12">
           {/* Logo Section */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center mb-12"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+            className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center shadow-[0_12px_40px_rgba(27,73,101,0.1)] border-2 border-white"
           >
+<<<<<<< HEAD
             <div className="w-24 h-24 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border-4 border-[#62B6CB]/20 mb-4 overflow-hidden">
                <img src="/assets/zyro-logo.svg" alt="Zyro" className="w-16 h-16 object-contain" />
             </div>
             <div className="bg-[#1B4965] px-3 py-1 rounded-full text-[8px] font-black text-white tracking-[0.2em] uppercase">
                NULL POINTERS PRESENTS
             </div>
+=======
+            <img src="/assets/zyro-logo.png" alt="Zyro" className="w-16 h-16 object-contain" />
+>>>>>>> b456267 (feat: update frontend ui)
           </motion.div>
 
-          {/* Headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl font-black text-[#1B4965] leading-tight tracking-tight mb-4">
-               Earn even when <br/>
-               <span className="text-[#62B6CB]">work stops.</span>
-            </h1>
-            <p className="text-[#1B4965]/60 font-medium leading-relaxed">
-               Parametric income protection for delivery partners. Zero claims. Instant payouts.
-            </p>
-          </motion.div>
-
-          {/* Feature List */}
-          <div className="space-y-4 mb-12">
-             {[
-               { icon: <ShieldCheck className="w-5 h-5 text-[#62B6CB]" />, text: "Automated Data Triggers" },
-               { icon: <Zap className="w-5 h-5 text-[#62B6CB]" />, text: "Instant UPI Payouts" },
-               { icon: <Smartphone className="w-5 h-5 text-[#62B6CB]" />, text: "90-Second Onboarding" },
-             ].map((f, i) => (
-               <motion.div
-                 key={i}
-                 initial={{ opacity: 0, x: -20 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 transition={{ delay: 0.4 + i * 0.1 }}
-                 className="flex items-center gap-4 bg-white/40 backdrop-blur-sm p-4 rounded-2xl border border-white/20 shadow-sm"
-               >
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                     {f.icon}
-                  </div>
-                  <span className="font-bold text-[#1B4965] text-sm">{f.text}</span>
-               </motion.div>
-             ))}
+          {/* Text Section */}
+          <div className="space-y-4">
+            <motion.h1 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-[32px] font-black text-[#1B4965] leading-tight tracking-tighter"
+            >
+              Earn even when <br/>
+              <span className="text-[#62B6CB]">work stops.</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-[16px] text-[#1B4965]/70 font-medium leading-relaxed px-4"
+            >
+              The world's first parametric income protection for delivery partners. Zero claims. Instant payouts.
+            </motion.p>
           </div>
 
-          {/* CTA Group */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="mt-auto space-y-4"
-          >
-             <Button
-               onClick={() => navigate("/login")}
-               className="w-full h-16 rounded-2xl bg-[#62B6CB] text-white font-black text-lg shadow-xl shadow-[#62B6CB]/20 flex items-center justify-center gap-2 group"
-             >
-                Get Protected Now
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-             </Button>
-
-             <Button
-               onClick={() => navigate("/login")}
-               variant="outline"
-               className="w-full h-16 rounded-2xl border-2 border-[#1B4965] bg-white/50 text-[#1B4965] font-black text-lg flex items-center justify-center gap-2 hover:bg-white/80 transition-all shadow-sm"
-             >
-                <LogIn className="w-5 h-5" />
-                Sign In
-             </Button>
-
-             <p className="text-center text-[10px] text-[#1B4965]/40 font-bold uppercase tracking-widest pt-2">
-                Trusted by 12,000+ Delivery Partners
-             </p>
-          </motion.div>
-
+          {/* Features Preview */}
+          <div className="w-full space-y-3 pt-4">
+            {[
+              { label: "Automated Triggers", sub: "No manual filing" },
+              { label: "Instant UPI Payouts", sub: "Money in seconds" }
+            ].map((f, i) => (
+              <motion.div
+                key={i}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 + (i * 0.1) }}
+                className="bg-white/40 backdrop-blur-md p-4 rounded-[24px] border border-white/40 flex items-center justify-between"
+              >
+                <div className="text-left">
+                  <div className="text-[14px] font-bold text-[#1B4965]">{f.label}</div>
+                  <div className="text-[11px] text-[#1B4965]/50 font-semibold uppercase tracking-wider">{f.sub}</div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center text-[#62B6CB]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
+
+        <StickyCTA className="bg-transparent shadow-none">
+          <Button onClick={() => navigate("/login")}>
+            Get Protected Now
+          </Button>
+          <Button variant="secondary" onClick={() => navigate("/login")}>
+            Sign In
+          </Button>
+        </StickyCTA>
       </div>
-    </MobileContainer>
+    </div>
   );
 }

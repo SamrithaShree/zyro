@@ -6,6 +6,7 @@ import { OfflineBanner } from "../components/common/OfflineBanner";
 import { ThemeProvider } from "next-themes";
 import { useAuthStore } from "../store/useAuthStore";
 import { useOnboardingStore } from "../store/useOnboardingStore";
+import { AnimatePresence } from "motion/react";
 
 // ErrorBoundary — class component required by React
 class ErrorBoundary extends React.Component<
@@ -21,17 +22,17 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center bg-background text-foreground">
-          <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center mb-4">
-            <span className="text-3xl">⚠️</span>
+        <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center bg-[#A7D6D3] text-[#1B4965]">
+          <div className="w-20 h-20 bg-white/20 rounded-[32px] flex items-center justify-center mb-6">
+            <span className="text-4xl">⚠️</span>
           </div>
-          <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <h2 className="text-2xl font-black mb-2">Something went wrong</h2>
+          <p className="text-sm text-[#1B4965]/60 mb-8 font-medium">
             Zyro hit an unexpected error. Please refresh to continue.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold"
+            className="px-8 py-4 bg-[#62B6CB] text-white rounded-2xl font-black shadow-xl shadow-[#62B6CB]/20"
           >
             Reload App
           </button>
@@ -43,26 +44,26 @@ class ErrorBoundary extends React.Component<
 }
 
 export default function App() {
-  const { isAuthenticated, token } = useAuthStore();
+  const { otpVerified, token } = useAuthStore();
   const syncWithBackend = useOnboardingStore((s) => s.syncWithBackend);
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (otpVerified && token) {
       syncWithBackend();
     }
-  }, [isAuthenticated, token, syncWithBackend]);
+  }, [otpVerified, token, syncWithBackend]);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <div className="dark">
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <div className="bg-[#A7D6D3] min-h-screen">
         <ErrorBoundary>
-          {/* OfflineBanner lives outside router — it only needs network status */}
           <OfflineBanner />
-          {/* RouterProvider renders everything inside router context */}
-          <Suspense fallback={null}>
-            <RouterProvider router={router} />
-          </Suspense>
-          <Toaster richColors position="top-center" />
+          <AnimatePresence mode="wait">
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-[#1B4965] font-bold">Loading Zyro...</div>}>
+              <RouterProvider router={router} />
+            </Suspense>
+          </AnimatePresence>
+          <Toaster richColors position="top-center" expand={false} />
         </ErrorBoundary>
       </div>
     </ThemeProvider>

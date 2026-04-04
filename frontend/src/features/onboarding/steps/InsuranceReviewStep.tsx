@@ -1,145 +1,155 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
-import { Button } from "../../../app/components/ui/button";
-import { Checkbox } from "../../../app/components/ui/checkbox";
-import { Loader2, ChevronRight } from "lucide-react";
+import { StickyCTA } from "../../../design-system/layouts/StickyCTA";
+import { Button } from "../../../design-system/components/Button";
+import { ModalSheet } from "../../../design-system/components/ModalSheet";
 import { apiService } from "../../../services/api";
+import { toast } from "sonner";
+import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 
-const INCOME_MAPPING: Record<string, string> = {
-  "Less than ₹3,000": "< 3,000",
-  "₹3,000 - ₹5,000": "3,000 - 5,000",
-  "₹5,000 - ₹7,000": "5,000 - 7,000",
-  "₹7,000 - ₹9,000": "7,000 - 9,000",
-  "₹9,000 - ₹12,000": "9,000+",
-  "More than ₹12,000": "9,000+"
-};
-
 export function InsuranceReviewStep() {
-  const { data, complete } = useOnboardingStore();
   const navigate = useNavigate();
-  const [quote, setQuote] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [activating, setActivating] = useState(false);
-  const [agreed, setAgreed] = useState({
-    premium: false,
-    coverage: false,
-    exclusions: false,
-    terms: false
-  });
+  const { data, complete, syncWithBackend } = useOnboardingStore();
+  const [loading, setLoading] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
-  useEffect(() => {
-    const fetchQuote = async () => {
-      try {
-        const response = await apiService.policy.getQuote(
-          data.zone || "Anna Nagar",
-          INCOME_MAPPING[data.incomeBand] || "3,000 - 5,000"
-        );
-        setQuote(response.data.data);
-      } catch {
-        // Handle error
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchQuote();
-  }, [data.zone, data.incomeBand]);
+  // Mock calculated values based on income band
+  const premium = (parseInt(data.incomeBand) * 0.015).toFixed(0);
+  const cap = (parseInt(data.incomeBand) * 0.1).toFixed(0);
 
-  const handleFinish = async () => {
-    setActivating(true);
+  const handleActivate = async () => {
+    if (!accepted) return;
+    
+    setLoading(true);
     try {
       await apiService.policy.acknowledge({
-        premium_acknowledged: agreed.premium,
-        coverage_acknowledged: agreed.coverage,
-        exclusions_acknowledged: agreed.exclusions,
-        terms_accepted: agreed.terms,
+        premium_acknowledged: true,
+        coverage_acknowledged: true,
+        exclusions_acknowledged: true,
+        terms_accepted: true,
         privacy_accepted: true
       });
       await apiService.policy.activate();
+      await syncWithBackend();
       complete();
+      toast.success("Protection Activated!");
       navigate("/dashboard");
-    } catch (err) {
-      // Handled by interceptor
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Activation failed");
     } finally {
-      setActivating(false);
+      setLoading(false);
     }
   };
 
-  const isComplete = agreed.premium && agreed.coverage && agreed.exclusions && agreed.terms;
-
-  if (loading) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-[#62B6CB] mb-4" />
-        <p className="text-xl font-bold text-[#1B4965]">Calculating your plan...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#1B4965] mb-2">Policy Review</h2>
-        <p className="text-[#1B4965]/60">Review your coverage before activating.</p>
+    <div className="space-y-8 pb-10">
+      <div className="space-y-6">
+        {/* Policy Summary Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#F4FBFB] p-8 rounded-[32px] shadow-[0_8px_30px_rgba(27,73,101,0.05)] border-2 border-white space-y-8"
+        >
+          <div className="text-center space-y-2">
+            <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#1B4965]/40">Weekly Premium</span>
+            <div className="text-[48px] font-black text-[#1B4965] tracking-tighter leading-none">
+              ₹{premium}<span className="text-[20px] font-bold text-[#1B4965]/30 tracking-normal ml-1">/wk</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#62B6CB]/5 p-4 rounded-[24px] space-y-1">
+              <span className="text-[10px] font-bold text-[#1B4965]/40 uppercase tracking-widest">Coverage Cap</span>
+              <div className="text-[18px] font-bold text-[#1B4965]">₹{cap}</div>
+            </div>
+            <div className="bg-[#62B6CB]/5 p-4 rounded-[24px] space-y-1">
+              <span className="text-[10px] font-bold text-[#1B4965]/40 uppercase tracking-widest">Duration</span>
+              <div className="text-[18px] font-bold text-[#1B4965]">7 Days</div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-[#1B4965]/5">
+            <div className="flex gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#62B6CB] flex items-center justify-center shrink-0 mt-0.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <p className="text-[13px] text-[#1B4965]/70 font-medium">Automatic payout for heavy rain & heat</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#62B6CB] flex items-center justify-center shrink-0 mt-0.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <p className="text-[13px] text-[#1B4965]/70 font-medium">No manual claim filing required</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Consent Section */}
+        <div className="pt-4">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="relative flex items-center justify-center mt-1">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+              />
+              <div className={`
+                w-6 h-6 rounded-lg border-2 transition-all
+                ${accepted ? 'bg-[#62B6CB] border-[#62B6CB]' : 'bg-white/20 border-[#1B4965]/20 group-hover:border-[#62B6CB]/40'}
+              `} />
+              <svg className={`absolute w-4 h-4 text-white transition-opacity ${accepted ? 'opacity-100' : 'opacity-0'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <span className="text-[14px] text-[#1B4965] font-medium leading-tight">
+              I agree to the <button onClick={(e) => { e.preventDefault(); setShowTerms(true); }} className="text-[#62B6CB] font-bold">Terms & Conditions</button> and <button onClick={(e) => { e.preventDefault(); setShowTerms(true); }} className="text-[#62B6CB] font-bold">Privacy Policy</button>.
+            </span>
+          </label>
+        </div>
       </div>
 
-      <div className="space-y-6 flex-1 overflow-y-auto pb-4">
-        {/* Quote Card */}
-        <div className="bg-[#1B4965] rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16" />
-           <div className="relative z-10 space-y-4">
-              <div className="flex justify-between items-start">
-                 <div>
-                    <span className="text-[10px] font-black text-[#62B6CB] uppercase tracking-widest">WEEKLY PREMIUM</span>
-                    <h3 className="text-4xl font-black">₹{quote.premiumAmount}</h3>
-                 </div>
-                 <div className="bg-[#62B6CB] px-3 py-1 rounded-full text-[10px] font-bold">ACTIVE WEEKLY</div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                 <div>
-                    <span className="text-[10px] font-bold text-white/50 uppercase">HOURLY BENEFIT</span>
-                    <p className="text-lg font-bold">₹{quote.hourlyBenefit}</p>
-                 </div>
-                 <div>
-                    <span className="text-[10px] font-bold text-white/50 uppercase">WEEKLY CAP</span>
-                    <p className="text-lg font-bold">₹{quote.weeklyCap}</p>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        {/* Checkboxes */}
-        <div className="space-y-4">
-           <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5">
-              <Checkbox checked={agreed.premium} onCheckedChange={(v) => setAgreed(s => ({ ...s, premium: !!v }))} />
-              <p className="text-xs text-[#1B4965]/80 font-medium">I understand that ₹{quote.premiumAmount} will be deducted weekly for this protection.</p>
-           </div>
-           <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5">
-              <Checkbox checked={agreed.coverage} onCheckedChange={(v) => setAgreed(s => ({ ...s, coverage: !!v }))} />
-              <p className="text-xs text-[#1B4965]/80 font-medium">I understand the coverage is parametric and only applies in my registered zone: {data.zone}.</p>
-           </div>
-           <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5">
-              <Checkbox checked={agreed.exclusions} onCheckedChange={(v) => setAgreed(s => ({ ...s, exclusions: !!v }))} />
-              <div className="flex-1">
-                 <p className="text-xs text-[#1B4965]/80 font-medium mb-1">I have read the exclusions (war, pandemic, etc.).</p>
-                 <button className="text-[10px] font-bold text-[#62B6CB] flex items-center">View Full Exclusions <ChevronRight className="w-3 h-3" /></button>
-              </div>
-           </div>
-           <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border-2 border-[#1B4965]/5">
-              <Checkbox checked={agreed.terms} onCheckedChange={(v) => setAgreed(s => ({ ...s, terms: !!v }))} />
-              <p className="text-xs text-[#1B4965]/80 font-medium">I agree to the Zyro Policy Document and IRDAI Sandbox terms.</p>
-           </div>
-        </div>
-      </div>
-
-      <Button
-        onClick={handleFinish}
-        disabled={!isComplete || activating}
-        className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-4 shadow-lg shadow-[#62B6CB]/20"
+      <ModalSheet 
+        isOpen={showTerms} 
+        onClose={() => setShowTerms(false)} 
+        title="Insurance Agreement"
       >
-        {activating ? <Loader2 className="w-6 h-6 animate-spin" /> : "Activate & Go to Dashboard"}
-      </Button>
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <section className="space-y-2">
+            <h4 className="text-[14px] font-bold text-[#1B4965] uppercase tracking-wider">1. Coverage Details</h4>
+            <p className="text-[14px] text-[#1B4965]/70 leading-relaxed">
+              Zyro provides parametric income protection. Payouts are triggered when rainfall exceeds 15mm/hr or temperatures exceed 43°C in your operating zone.
+            </p>
+          </section>
+          <section className="space-y-2">
+            <h4 className="text-[14px] font-bold text-[#1B4965] uppercase tracking-wider">2. Payout Logic</h4>
+            <p className="text-[14px] text-[#1B4965]/70 leading-relaxed">
+              Payouts are calculated per-hour of disruption based on your income band. The maximum weekly cap is ₹{cap}.
+            </p>
+          </section>
+          <section className="space-y-2">
+            <h4 className="text-[14px] font-bold text-[#1B4965] uppercase tracking-wider">3. Data Usage</h4>
+            <p className="text-[14px] text-[#1B4965]/70 leading-relaxed">
+              We track your GPS location only when the app is in "Online" mode to verify presence in the affected zone.
+            </p>
+          </section>
+          <section className="space-y-2">
+            <h4 className="text-[14px] font-bold text-[#1B4965] uppercase tracking-wider">4. Disclaimer</h4>
+            <p className="text-[14px] text-[#1B4965]/70 leading-relaxed italic">
+              This is a parametric product. No manual claims are accepted. If data triggers do not hit the threshold, no payout will be issued.
+            </p>
+          </section>
+        </div>
+        <Button onClick={() => setShowTerms(false)} variant="secondary" className="mt-8">
+          Close Terms
+        </Button>
+      </ModalSheet>
+
+      <StickyCTA>
+        <Button onClick={handleActivate} disabled={!accepted || loading}>
+          {loading ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" /> : "Activate Protection"}
+        </Button>
+      </StickyCTA>
     </div>
   );
 }

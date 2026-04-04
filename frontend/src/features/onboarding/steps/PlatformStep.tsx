@@ -1,80 +1,80 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
-import { Button } from "../../../app/components/ui/button";
-import { Input } from "../../../app/components/ui/input";
+import { StickyCTA } from "../../../design-system/layouts/StickyCTA";
+import { Button } from "../../../design-system/components/Button";
+import { SelectionCard } from "../../../design-system/components/SelectionCard";
+import { motion, AnimatePresence } from "motion/react";
 
-const PLATFORMS = ["Swiggy", "Zomato", "Uber", "Zepto", "Blinkit", "Other"];
-const VEHICLES = ["Bike", "Electric Scooter", "Cycle", "Other"];
+const PLATFORMS = ["Swiggy", "Zomato", "UberEats"];
 
 export function PlatformStep() {
   const { data, updateData, nextStep } = useOnboardingStore();
+  const [showOther, setShowOther] = useState(data.platform !== "" && !PLATFORMS.includes(data.platform));
+  const [otherValue, setOtherValue] = useState(showOther ? data.platform : "");
 
-  const isComplete = !!data.platform;
+  const handleSelect = (p: string) => {
+    setShowOther(false);
+    updateData({ platform: p });
+  };
+
+  const handleOtherClick = () => {
+    setShowOther(true);
+    updateData({ platform: otherValue });
+  };
+
+  const handleOtherChange = (val: string) => {
+    setOtherValue(val);
+    updateData({ platform: val });
+  };
+
+  const isComplete = data.platform.trim().length > 0;
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#1B4965] mb-2">Work Platform</h2>
-        <p className="text-[#1B4965]/60">Where do you earn most of your income?</p>
-      </div>
+    <div className="space-y-4">
+      {PLATFORMS.map((p) => (
+        <SelectionCard
+          key={p}
+          selected={data.platform === p && !showOther}
+          onClick={() => handleSelect(p)}
+        >
+          {p}
+        </SelectionCard>
+      ))}
 
-      <div className="space-y-6 flex-1">
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-[#1B4965]/80 uppercase tracking-wider">Primary Platform</label>
-          <div className="grid grid-cols-2 gap-3">
-            {PLATFORMS.map((p) => (
-              <button
-                key={p}
-                onClick={() => updateData({ platform: p })}
-                className={`h-14 rounded-2xl border-2 font-bold text-sm transition-all shadow-sm ${
-                  data.platform === p 
-                    ? "bg-[#62B6CB] border-[#62B6CB] text-white shadow-lg" 
-                    : "bg-white border-[#1B4965]/5 text-[#1B4965]"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-[#1B4965]/80 uppercase tracking-wider">Vehicle Type</label>
-          <div className="flex flex-wrap gap-2">
-            {VEHICLES.map((v) => (
-              <button
-                key={v}
-                onClick={() => updateData({ vehicleType: v })}
-                className={`px-4 h-10 rounded-full border-2 font-bold text-xs transition-all ${
-                  data.vehicleType === v 
-                    ? "bg-[#1B4965] border-[#1B4965] text-white" 
-                    : "bg-white border-[#1B4965]/5 text-[#1B4965]"
-                }`}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-[#1B4965]/80 uppercase tracking-wider">Partner ID (Optional)</label>
-          <Input 
-            placeholder="Ex: 552190"
-            value={data.workerId || ""}
-            onChange={(e) => updateData({ workerId: e.target.value })}
-            className="h-14 bg-white border-2 border-[#1B4965]/5 rounded-2xl text-lg font-bold shadow-sm"
-          />
-        </div>
-      </div>
-
-      <Button
-        onClick={nextStep}
-        disabled={!isComplete}
-        className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-8"
+      <SelectionCard
+        selected={showOther}
+        onClick={handleOtherClick}
       >
-        Continue
-      </Button>
+        Other
+      </SelectionCard>
+
+      <AnimatePresence>
+        {showOther && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 pb-4">
+              <input
+                type="text"
+                placeholder="Enter platform name"
+                value={otherValue}
+                autoFocus
+                onChange={(e) => handleOtherChange(e.target.value)}
+                className="w-full h-16 px-6 bg-[#F4FBFB] rounded-[20px] text-[18px] font-bold text-[#1B4965] placeholder:text-[#1B4965]/20 shadow-[0_4px_20px_rgba(27,73,101,0.08)] focus:ring-2 focus:ring-[#62B6CB] focus:ring-offset-2 outline-none transition-all"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <StickyCTA>
+        <Button onClick={nextStep} disabled={!isComplete}>
+          Continue
+        </Button>
+      </StickyCTA>
     </div>
   );
 }

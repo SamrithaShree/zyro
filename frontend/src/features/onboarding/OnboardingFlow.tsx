@@ -1,8 +1,7 @@
 import React from "react";
-import { MobileContainer } from "../../app/components/MobileContainer";
 import { useOnboardingStore } from "../../store/useOnboardingStore";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { StepContainer } from "../../design-system/layouts/StepContainer";
 
 // Steps
 import { ConsentStep } from "./steps/ConsentStep";
@@ -14,10 +13,16 @@ import { LocationStep } from "./steps/LocationStep";
 import { WorkDetailsStep } from "./steps/WorkDetailsStep";
 import { UPISetupStep } from "./steps/UPISetupStep";
 import { ReviewStep } from "./steps/ReviewStep";
-import { MPinSetupStep } from "./steps/MPinSetupStep";
 import { InsuranceReviewStep } from "./steps/InsuranceReviewStep";
 
-const TOTAL_STEPS = 11;
+// Placeholders for remaining steps
+const PlaceholderStep = ({ name }: { name: string }) => (
+  <div className="py-10 text-center text-[#1B4965]/40 italic">
+    {name} coming soon...
+  </div>
+);
+
+const TOTAL_STEPS = 10;
 
 export function OnboardingFlow() {
   const { currentStep, prevStep } = useOnboardingStore();
@@ -33,62 +38,38 @@ export function OnboardingFlow() {
       case 7: return <WorkDetailsStep />;
       case 8: return <UPISetupStep />;
       case 9: return <ReviewStep />;
-      case 10: return <MPinSetupStep />;
-      case 11: return <InsuranceReviewStep />;
-      default: return null;
+      case 10: return <InsuranceReviewStep />;
+      default: return <PlaceholderStep name={`Step ${currentStep}`} />;
     }
   };
 
-  return (
-    <MobileContainer style={{ backgroundColor: "#BEE9E8" }}>
-      <div className="flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="px-8 pt-10 pb-6 bg-white/20 backdrop-blur-sm sticky top-0 z-10 border-b border-[#1B4965]/5">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl bg-white/50 text-[#1B4965] transition-opacity ${
-                currentStep === 1 ? "opacity-0 pointer-events-none" : "opacity-100"
-              }`}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-[#1B4965]/40 uppercase tracking-tighter">Progress</span>
-              <span className="text-sm font-black text-[#1B4965]">
-                {String(currentStep).padStart(2, '0')} / {TOTAL_STEPS}
-              </span>
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="h-1.5 w-full bg-white/30 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-[#62B6CB]"
-              initial={{ width: 0 }}
-              animate={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            />
-          </div>
-        </div>
+  const getStepHeader = () => {
+    switch (currentStep) {
+      case 1: return { title: "Permissions", subtext: "Zyro needs these to verify your work and detect parametric triggers." };
+      case 2: return { title: "Basic Identity", subtext: "Tell us a bit about yourself to secure your profile." };
+      case 3: return { title: "Work Platform", subtext: "Select the platform where you earn most of your income." };
+      case 4: return { title: "Aadhaar Check", subtext: "Secure verification via UIDAI mock gateway." };
+      case 5: return { title: "Liveness Check", subtext: "Biometric selfie to match your Aadhaar records." };
+      case 6: return { title: "Operating Zone", subtext: "Detecting your service area for parametric coverage." };
+      case 7: return { title: "Work Details", subtext: "We calculate your benefit based on your work patterns." };
+      case 8: return { title: "Payout ID", subtext: "Where should we send your money when a trigger hits?" };
+      case 9: return { title: "Verification", subtext: "Finalizing your Zyro Partner profile." };
+      case 10: return { title: "Policy Review", subtext: "Review your personalized protection plan." };
+      default: return { title: `Step ${currentStep}`, subtext: "Continuing your onboarding..." };
+    }
+  };
 
-        {/* Content */}
-        <div className="flex-1 px-8 py-8 flex flex-col">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col"
-            >
-              {renderStep()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-    </MobileContainer>
+  const header = getStepHeader();
+
+  return (
+    <StepContainer
+      step={currentStep}
+      totalSteps={TOTAL_STEPS}
+      onBack={currentStep > 1 ? prevStep : undefined}
+      title={header.title}
+      subtext={header.subtext}
+    >
+      {renderStep()}
+    </StepContainer>
   );
 }

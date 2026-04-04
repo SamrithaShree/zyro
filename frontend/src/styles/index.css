@@ -1,3 +1,28 @@
-@import './fonts.css';
-@import './tailwind.css';
-@import './theme.css';
+@import "./fonts.css";
+@import "./tailwind.css";
+@import "./theme.css";
+
+::selection {
+  background-color: #62B6CB;
+  color: #FFFFFF;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #A7D6D3;
+  overflow-x: hidden;
+}

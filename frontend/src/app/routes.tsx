@@ -1,52 +1,49 @@
 import { createBrowserRouter, Navigate } from "react-router";
-import { useAuthStore } from "../store/useAuthStore";
-import { useOnboardingStore } from "../store/useOnboardingStore";
+
+// Components
+import { AuthGuard } from "./components/AuthGuard";
 
 // Screens
 import { Welcome } from "./screens/Welcome";
 import { PhoneLogin } from "./screens/PhoneLogin";
+import { MPinLogin } from "./screens/MPinLogin";
+import { MPinSetup } from "./screens/MPinSetup";
 import { Dashboard } from "./screens/Dashboard";
 import { Profile } from "./screens/Profile";
 import { OnboardingFlow } from "../features/onboarding/OnboardingFlow";
 
-// Route Guards
-function AuthGuard({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-}
-
-function OnboardingGuard({ children }: { children: React.ReactNode }) {
-  const isRegistered = useAuthStore((s) => s.isRegistered);
-  const isComplete = useOnboardingStore((s) => s.isComplete);
-  
-  if (!isRegistered || !isComplete) {
-    return <Navigate to="/onboarding" replace />;
-  }
-  return <>{children}</>;
-}
-
 export const router = createBrowserRouter([
-  // Public
-  { path: "/", Component: Welcome },
-  { path: "/login", Component: PhoneLogin },
-
-  // Onboarding (requires auth)
+  {
+    path: "/",
+    element: <AuthGuard><Welcome /></AuthGuard>,
+  },
+  {
+    path: "/login",
+    element: <AuthGuard><PhoneLogin /></AuthGuard>,
+  },
+  {
+    path: "/mpin-login",
+    element: <AuthGuard><MPinLogin /></AuthGuard>,
+  },
+  {
+    path: "/mpin-setup",
+    element: <AuthGuard><MPinSetup /></AuthGuard>,
+  },
   {
     path: "/onboarding",
     element: <AuthGuard><OnboardingFlow /></AuthGuard>,
   },
-
-  // Main app (requires auth + onboarding complete)
   {
     path: "/dashboard",
-    element: <AuthGuard><OnboardingGuard><Dashboard /></OnboardingGuard></AuthGuard>,
+    element: <AuthGuard><Dashboard /></AuthGuard>,
   },
   {
     path: "/profile",
-    element: <AuthGuard><OnboardingGuard><Profile /></OnboardingGuard></AuthGuard>,
+    element: <AuthGuard><Profile /></AuthGuard>,
   },
-
-  // Fallback
-  { path: "*", element: <Navigate to="/dashboard" replace /> },
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
+  },
 ]);
+

@@ -1,121 +1,125 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useOnboardingStore } from "../../../store/useOnboardingStore";
-import { Button } from "../../../app/components/ui/button";
+import { StickyCTA } from "../../../design-system/layouts/StickyCTA";
+import { Button } from "../../../design-system/components/Button";
+import { SliderInput } from "../../../design-system/components/SliderInput";
+import { SelectionCard } from "../../../design-system/components/SelectionCard";
 import { apiService } from "../../../services/api";
-import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { motion } from "motion/react";
 
 const INCOME_BANDS = [
-  "Less than ₹3,000",
-  "₹3,000 - ₹5,000",
-  "₹5,000 - ₹7,000",
-  "₹7,000 - ₹9,000",
-  "₹9,000 - ₹12,000",
-  "More than ₹12,000"
+  { label: "Low", range: "< ₹3,000", value: "3000" },
+  { label: "Medium", range: "₹3,000 - ₹7,000", value: "5000" },
+  { label: "High", range: "₹7,000 - ₹12,000", value: "9000" },
+  { label: "Pro", range: "> ₹12,000", value: "12000" }
 ];
 
-const PEAK_HOURS = ["Morning", "Afternoon", "Evening", "Late Night"];
-
-const INCOME_MAPPING: Record<string, string> = {
-  "Less than ₹3,000": "< 3,000",
-  "₹3,000 - ₹5,000": "3,000 - 5,000",
-  "₹5,000 - ₹7,000": "5,000 - 7,000",
-  "₹7,000 - ₹9,000": "7,000 - 9,000",
-  "₹9,000 - ₹12,000": "9,000+",
-  "More than ₹12,000": "9,000+"
-};
-
 export function WorkDetailsStep() {
-  const { data, updateData, syncWithBackend } = useOnboardingStore();
+  const { data, updateData, nextStep, syncWithBackend } = useOnboardingStore();
   const [loading, setLoading] = useState(false);
+
+  // Auto-calculate weekly income when daily or days change
+  useEffect(() => {
+    const daily = parseInt(data.dailyIncome) || 0;
+    const days = parseInt(data.daysPerWeek) || 0;
+    const weekly = daily * days;
+    updateData({ weeklyIncome: weekly.toString() });
+  }, [data.dailyIncome, data.daysPerWeek]);
 
   const handleContinue = async () => {
     setLoading(true);
     try {
       await apiService.worker.saveWorkProfile({
-        platform: data.platform || "Other",
+        platform: data.platform,
         working_hours_per_day: parseInt(data.workingHoursPerDay),
         days_worked_per_week: parseInt(data.daysPerWeek),
-        income_band: INCOME_MAPPING[data.incomeBand] || "3,000 - 5,000"
+        income_band: data.incomeBand
       });
       await syncWithBackend();
-    } catch (err) {
-      // Handled by interceptor
+      nextStep();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save work profile");
     } finally {
       setLoading(false);
     }
   };
 
+  const isComplete = data.workingHoursPerDay && data.daysPerWeek && data.incomeBand;
+
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#1B4965] mb-2">Work Details</h2>
-        <p className="text-[#1B4965]/60">We calculate your benefit based on these inputs.</p>
-      </div>
+    <div className="space-y-10 pb-10">
+      <div className="space-y-8">
+        {/* Working Hours */}
+        <SliderInput
+          label="Working Hours / Day"
+          unit=" hrs"
+          min={1}
+          max={16}
+          step={1}
+          value={parseInt(data.workingHoursPerDay)}
+          onChange={(val) => updateData({ workingHoursPerDay: val.toString() })}
+        />
 
-      <div className="space-y-8 flex-1">
-        <div>
-          <div className="flex items-center justify-between mb-4">
-             <label className="block text-sm font-semibold text-[#1B4965]/80 uppercase tracking-wider">Working Hours / Day</label>
-             <span className="text-xl font-black text-[#62B6CB]">{data.workingHoursPerDay} hrs</span>
+        {/* Days Per Week */}
+        <SliderInput
+          label="Days / Week"
+          unit=" days"
+          min={1}
+          max={7}
+          step={1}
+          value={parseInt(data.daysPerWeek)}
+          onChange={(val) => updateData({ daysPerWeek: val.toString() })}
+        />
+
+        {/* Daily Income */}
+        <SliderInput
+          label="Avg. Daily Income"
+          unit=""
+          min={200}
+          max={3000}
+          step={50}
+          value={parseInt(data.dailyIncome)}
+          onChange={(val) => updateData({ dailyIncome: val.toString() })}
+        />
+
+        {/* Weekly Summary Display */}
+        <div className="bg-[#62B6CB]/10 p-6 rounded-[28px] border-2 border-[#62B6CB]/10 flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[12px] font-bold text-[#1B4965]/40 uppercase tracking-widest">Est. Weekly Income</span>
+            <div className="text-[24px] font-extrabold text-[#1B4965]">₹{data.weeklyIncome}</div>
           </div>
-          <input 
-            type="range"
-            min="1"
-            max="16"
-            step="1"
-            value={data.workingHoursPerDay}
-            onChange={(e) => updateData({ workingHoursPerDay: e.target.value })}
-            className="w-full h-2 bg-[#1B4965]/10 rounded-full appearance-none accent-[#62B6CB]"
-          />
+          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#62B6CB] shadow-sm">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
         </div>
 
-        <div>
-           <label className="block text-sm font-semibold mb-4 text-[#1B4965]/80 uppercase tracking-wider">Peak Working Hours</label>
-           <div className="grid grid-cols-2 gap-3">
-             {PEAK_HOURS.map((h) => (
-               <button
-                 key={h}
-                 onClick={() => updateData({ peakHours: h })}
-                 className={`h-12 rounded-xl border-2 font-bold text-xs transition-all ${
-                   data.peakHours === h 
-                    ? "bg-[#1B4965] border-[#1B4965] text-white" 
-                    : "bg-white border-[#1B4965]/5 text-[#1B4965]"
-                 }`}
-               >
-                 {h}
-               </button>
-             ))}
-           </div>
-        </div>
-
-        <div>
-           <label className="block text-sm font-semibold mb-4 text-[#1B4965]/80 uppercase tracking-wider">Estimated Weekly Income</label>
-           <div className="space-y-2">
-             {INCOME_BANDS.map((b) => (
-               <button
-                 key={b}
-                 onClick={() => updateData({ incomeBand: b })}
-                 className={`w-full h-14 px-4 rounded-2xl border-2 font-bold text-left transition-all flex items-center justify-between ${
-                   data.incomeBand === b 
-                    ? "bg-[#62B6CB] border-[#62B6CB] text-white shadow-lg" 
-                    : "bg-white border-[#1B4965]/5 text-[#1B4965]"
-                 }`}
-               >
-                 <span>{b}</span>
-                 {data.incomeBand === b && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-               </button>
-             ))}
-           </div>
+        {/* Income Band Selection */}
+        <div className="space-y-4">
+          <label className="text-[12px] font-bold uppercase tracking-widest text-[#1B4965]/40 px-1">Select Income Band</label>
+          <div className="grid grid-cols-2 gap-3">
+            {INCOME_BANDS.map((band) => (
+              <SelectionCard
+                key={band.label}
+                selected={data.incomeBand === band.value}
+                onClick={() => updateData({ incomeBand: band.value })}
+                className="py-4 px-4"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[14px] font-bold">{band.label}</span>
+                  <span className={`text-[10px] font-medium ${data.incomeBand === band.value ? 'text-white/70' : 'text-[#1B4965]/50'}`}>{band.range}</span>
+                </div>
+              </SelectionCard>
+            ))}
+          </div>
         </div>
       </div>
 
-      <Button
-        onClick={handleContinue}
-        disabled={loading || !data.incomeBand || !data.peakHours}
-        className="w-full h-16 rounded-2xl font-bold text-lg bg-[#62B6CB] text-white mt-8"
-      >
-        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue"}
-      </Button>
+      <StickyCTA>
+        <Button onClick={handleContinue} disabled={!isComplete || loading}>
+          {loading ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" /> : "Save Work Profile"}
+        </Button>
+      </StickyCTA>
     </div>
   );
 }
