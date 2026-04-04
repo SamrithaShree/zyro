@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/SamrithaShree/zyro/main/assets/zyro-logo.png" width="300" alt="Zyro Logo"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/SamrithaShree/zyro/main/assets/zyro-logo.svg" width="300" alt="Zyro Logo"></p>
 
 # Zyro
 

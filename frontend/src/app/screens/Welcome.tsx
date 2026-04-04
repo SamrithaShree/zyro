@@ -46,7 +46,7 @@ export function Welcome() {
             className="flex flex-col items-center mb-12"
           >
             <div className="w-24 h-24 rounded-[32px] bg-white shadow-2xl flex items-center justify-center border-4 border-[#62B6CB]/20 mb-4 overflow-hidden">
-               <img src="/assets/zyro-logo.png" alt="Zyro" className="w-16 h-16 object-contain" />
+               <img src="/assets/zyro-logo.svg" alt="Zyro" className="w-16 h-16 object-contain" />
             </div>
             <div className="bg-[#1B4965] px-3 py-1 rounded-full text-[8px] font-black text-white tracking-[0.2em] uppercase">
                NULL POINTERS PRESENTS
