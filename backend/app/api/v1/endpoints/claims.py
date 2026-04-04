@@ -21,10 +21,15 @@ async def get_my_claims(worker_id: str = Depends(get_current_worker_id)):
     Get all claims for the authenticated worker.
     Used for the worker's claim history dashboard.
     """
-    worker_claims = [
-        Claim(**c) for c in session.claims.values() 
-        if c.get("worker_id") == worker_id
-    ]
+    with session.db_lock:
+        claims_list = list(session.claims.values())
+
+    worker_claims = []
+    for c in claims_list:
+        obj = c if isinstance(c, Claim) else Claim(**c)
+        if obj.worker_id == worker_id:
+            worker_claims.append(obj)
+
     # Sort by creation time (newest first)
     worker_claims.sort(key=lambda x: x.created_at, reverse=True)
     return worker_claims
@@ -34,7 +39,10 @@ async def get_claims_summary():
     """
     Admin/System level summary of claims.
     """
-    all_claims = [Claim(**c) for c in session.claims.values()]
+    with session.db_lock:
+        claims_list = list(session.claims.values())
+
+    all_claims = [c if isinstance(c, Claim) else Claim(**c) for c in claims_list]
     total_payout = sum(c.final_payout for c in all_claims if c.status == ClaimStatus.PAID or c.status == ClaimStatus.PAYOUT_READY)
     pending_review = len([c for c in all_claims if c.status == ClaimStatus.REVIEW])
     
@@ -49,7 +57,9 @@ async def get_claim(claim_id: str):
     claim_data = session.claims.get(claim_id)
     if not claim_data:
         raise HTTPException(status_code=404, detail="Claim not found")
-    return Claim(**claim_data)
+    
+    obj = claim_data if isinstance(claim_data, Claim) else Claim(**claim_data)
+    return obj
 
 @router.post("/{claim_id}/approve", response_model=ClaimResponse)
 async def approve_claim(claim_id: str):
