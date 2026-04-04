@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { MobileContainer } from "../components/MobileContainer";
-import { BottomNav } from "../components/BottomNav";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { 
   ShieldCheck, 
   MapPin, 
@@ -10,31 +9,39 @@ import {
   Zap,
   Loader2,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  CreditCard,
+  Plus
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useAuthStore } from "../../store/useAuthStore";
-import { policyService, PolicyInfo } from "../../services/policyService";
-import { workerService, WorkerInfo } from "../../services/workerService";
-import { Button } from "../components/ui/button";
+import { apiService } from "../../services/api";
+import { Button } from "../../design-system/components/Button";
+import { BottomNav } from "../components/BottomNav";
+import "../../design-system/styles/atmosphere.css";
 
 export function Dashboard() {
-  const { workerId } = useAuthStore();
-  const [profile, setProfile] = useState<WorkerInfo | null>(null);
-  const [activePolicy, setActivePolicy] = useState<PolicyInfo | null>(null);
+  const navigate = useNavigate();
+  const { workerId, name } = useAuthStore();
+  const [profile, setProfile] = useState<any>(null);
+  const [policyStatus, setPolicyStatus] = useState<any>(null);
+  const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profData, policyData] = await Promise.all([
-          workerService.getMe(),
-          policyService.getActivePolicy()
+        const [profRes, policyRes, claimsRes] = await Promise.all([
+          apiService.worker.getMe(),
+          apiService.policy.getStatus(),
+          apiService.claims.getMyClaims()
         ]);
-        setProfile(profData);
-        setActivePolicy(policyData);
+        
+        if (profRes.data.status === "SUCCESS") setProfile(profRes.data.data);
+        if (policyRes.data.status === "SUCCESS") setPolicyStatus(policyRes.data.data);
+        setClaims(claimsRes.data);
       } catch (err) {
-        // Handle error
+        console.error("Dashboard data fetch failed", err);
       } finally {
         setLoading(false);
       }
@@ -42,172 +49,181 @@ export function Dashboard() {
     fetchData();
   }, []);
 
-  const handleActivate = async () => {
-    setLoading(true);
-    try {
-      await policyService.activatePolicy();
-      const policyInfo = await policyService.getActivePolicy();
-      setActivePolicy(policyInfo);
-    } catch {
-       // handled
-    } finally {
-       setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
-      <MobileContainer className="bg-[#1B4965]">
-        <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-          <Loader2 className="w-12 h-12 animate-spin text-[#62B6CB]" />
-          <p className="mt-4 text-white/40 font-bold uppercase tracking-widest text-[10px]">Loading Profile</p>
+      <div className="zyro-root font-sans">
+        <div className="zyro-atmosphere" />
+        <div className="zyro-container flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 animate-spin text-[#62B6CB]" />
+            <p className="text-[#1B4965]/60 font-bold uppercase tracking-widest text-[10px]">Loading Dashboard</p>
+          </div>
         </div>
-        <BottomNav />
-      </MobileContainer>
+      </div>
     );
   }
 
-  return (
-    <MobileContainer hasBottomNav className="bg-[#1B4965]">
-      <div className="px-6 pt-12 pb-32 space-y-8">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-             <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#62B6CB] animate-pulse" />
-                <span className="text-[10px] font-black text-[#62B6CB] uppercase tracking-widest">Online & Protected</span>
-             </div>
-             <h1 className="text-3xl font-black text-white tracking-tight">{workerId}</h1>
-             <div className="flex items-center gap-1.5 text-white/40">
-                <MapPin className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold">{profile?.zone || "Koramangala, BLR"}</span>
-             </div>
-          </div>
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="w-16 h-16 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col items-center justify-center shadow-2xl"
-          >
-             <span className="text-xl font-black text-[#62B6CB] leading-none">{profile?.trustScore || "98"}</span>
-             <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter mt-1">TRUST</span>
-          </motion.div>
-        </div>
+  const hasPolicy = policyStatus?.has_active_policy;
+  const policy = policyStatus?.policy_details;
 
-        {/* Policy Status - The Hero Element */}
-        {activePolicy ? (
+  return (
+    <div className="zyro-root font-sans">
+      <div className="zyro-atmosphere" />
+      
+      <div className="zyro-container pb-32">
+        {/* Top Header */}
+        <header className="px-6 pt-10 pb-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${hasPolicy ? 'bg-[#62B6CB]' : 'bg-[#FF6B35]'}`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${hasPolicy ? 'text-[#62B6CB]' : 'text-[#FF6B35]'}`}>
+                {hasPolicy ? 'Protected' : 'Unprotected'}
+              </span>
+            </div>
+            <h1 className="text-[28px] font-black text-[#1B4965] tracking-tight">
+              Hey, {profile?.name || name || 'Partner'}
+            </h1>
+            <div className="flex items-center gap-1.5 text-[#1B4965]/40">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="text-[12px] font-bold">{profile?.city || 'Chennai'} • {profile?.zone || 'Anna Nagar'}</span>
+            </div>
+          </div>
+          
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#BEE9E8] rounded-[40px] p-8 text-[#1B4965] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden group"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/profile")}
+            className="w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/60 flex flex-col items-center justify-center shadow-sm cursor-pointer"
           >
-             <div className="absolute top-0 right-0 w-48 h-48 bg-[#62B6CB]/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-110 transition-transform duration-700" />
-             
-             <div className="relative z-10 space-y-8">
+            <span className="text-[18px] font-black text-[#62B6CB] leading-none">{profile?.trust_score || '--'}</span>
+            <span className="text-[8px] font-black text-[#1B4965]/40 uppercase tracking-tighter mt-1">TRUST</span>
+          </motion.div>
+        </header>
+
+        <main className="px-6 space-y-8">
+          
+          {/* Policy Hero Card */}
+          {hasPolicy ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/40 backdrop-blur-md rounded-[40px] p-8 border border-white/60 shadow-[0_8px_30px_rgba(27,73,101,0.05)] relative overflow-hidden"
+            >
+              <div className="relative z-10 space-y-8">
                 <div className="flex justify-between items-start">
-                   <div className="space-y-1">
-                      <span className="text-[10px] font-black text-[#1B4965]/40 uppercase tracking-[0.2em]">Active Coverage</span>
-                      <h2 className="text-5xl font-black tracking-tighter italic">₹{activePolicy.premiumAmount}</h2>
-                      <p className="text-xs font-bold text-[#1B4965]/60">Weekly Premium Plan</p>
-                   </div>
-                   <div className="w-14 h-14 rounded-2xl bg-[#1B4965] flex items-center justify-center text-[#BEE9E8] shadow-xl">
-                      <ShieldCheck className="w-8 h-8" />
-                   </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-[#1B4965]/40 uppercase tracking-[0.2em]">{policy?.tier} Protection</span>
+                    <div className="flex items-baseline gap-1">
+                      <h2 className="text-[42px] font-black text-[#1B4965] tracking-tighter italic leading-none">₹{policy?.premium_amount}</h2>
+                      <span className="text-[14px] font-bold text-[#1B4965]/30">/wk</span>
+                    </div>
+                  </div>
+                  <div className="w-14 h-14 rounded-[20px] bg-[#1B4965] flex items-center justify-center text-white shadow-lg shadow-[#1B4965]/20">
+                    <ShieldCheck size={28} />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-[#1B4965]/5 backdrop-blur-sm p-5 rounded-[24px] border border-[#1B4965]/10">
-                      <span className="text-[9px] font-black text-[#1B4965]/40 uppercase tracking-wider block mb-1">Benefit/Hr</span>
-                      <span className="text-2xl font-black italic">₹{activePolicy.hourlyBenefit}</span>
-                   </div>
-                   <div className="bg-[#1B4965]/5 backdrop-blur-sm p-5 rounded-[24px] border border-[#1B4965]/10">
-                      <span className="text-[9px] font-black text-[#1B4965]/40 uppercase tracking-wider block mb-1">Max Payout</span>
-                      <span className="text-2xl font-black italic">₹{activePolicy.weeklyCap}</span>
-                   </div>
+                  <div className="bg-white/40 p-5 rounded-[24px] border border-white/60">
+                    <span className="text-[9px] font-black text-[#1B4965]/40 uppercase tracking-wider block mb-1">Benefit/Hr</span>
+                    <span className="text-[20px] font-black text-[#1B4965] italic">₹{policy?.hourly_benefit}</span>
+                  </div>
+                  <div className="bg-white/40 p-5 rounded-[24px] border border-white/60">
+                    <span className="text-[9px] font-black text-[#1B4965]/40 uppercase tracking-wider block mb-1">Weekly Cap</span>
+                    <span className="text-[20px] font-black text-[#1B4965] italic">₹{policy?.weekly_cap}</span>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-6 border-t border-[#1B4965]/10">
-                   <div className="flex items-center gap-2">
-                      <History className="w-4 h-4 opacity-40" />
-                      <span className="text-[10px] font-bold opacity-60">Expires {new Date(activePolicy.validUntil).toLocaleDateString()}</span>
-                   </div>
-                   <button className="text-[10px] font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4">
-                      Policy Details
-                   </button>
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 text-[#62B6CB]" />
+                    <span className="text-[11px] font-bold text-[#1B4965]/60">{policyStatus?.coverage_window}</span>
+                  </div>
+                  <button className="text-[11px] font-black text-[#1B4965] uppercase tracking-widest hover:opacity-60 transition-opacity">
+                    View Policy
+                  </button>
                 </div>
-             </div>
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/5 backdrop-blur-xl rounded-[40px] p-8 border border-white/10 space-y-8"
-          >
-             <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-2xl bg-[#62B6CB]/20 flex items-center justify-center text-[#62B6CB]">
-                   <ShieldAlert className="w-8 h-8" />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white/40 backdrop-blur-md rounded-[40px] p-8 border border-white/60 shadow-[0_8px_30px_rgba(27,73,101,0.05)] space-y-8"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-[24px] bg-[#FF6B35]/10 flex items-center justify-center text-[#FF6B35]">
+                  <ShieldAlert size={32} />
                 </div>
                 <div>
-                   <h3 className="text-xl font-black text-white italic">Unprotected</h3>
-                   <p className="text-sm text-white/40 font-medium">Your income is at risk today.</p>
+                  <h3 className="text-[20px] font-black text-[#1B4965] italic tracking-tight">Unprotected</h3>
+                  <p className="text-[14px] text-[#1B4965]/60 font-medium leading-tight">Your income is at risk today. Activate protection to earn safely.</p>
                 </div>
-             </div>
-             <Button onClick={handleActivate} variant="gradient" size="lg" className="w-full">
+              </div>
+              <Button onClick={() => navigate("/plan-selection")}>
                 Activate Protection
-             </Button>
-          </motion.div>
-        )}
+              </Button>
+            </motion.div>
+          )}
 
-        {/* Claim Awareness Section */}
-        <div className="space-y-6">
-           <div className="flex items-center justify-between px-2">
-              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Real-time Triggers</h3>
+          {/* Claims / Activity Section */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-[12px] font-bold text-[#1B4965]/40 uppercase tracking-[0.2em]">Recent Activity</h3>
               <TrendingUp className="w-4 h-4 text-[#62B6CB]" />
-           </div>
-           
-           <div className="grid grid-cols-1 gap-4">
-              {[
-                { 
-                  icon: <Activity className="w-5 h-5" />, 
-                  title: "Weather Monitoring", 
-                  desc: "Tracking IMD heat & rain alerts" 
-                },
-                { 
-                  icon: <Zap className="w-5 h-5" />, 
-                  title: "Smart Detection", 
-                  desc: "Payouts trigger without paperwork" 
-                }
-              ].map((item, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white/5 backdrop-blur-sm rounded-[28px] p-6 border border-white/10 flex items-center gap-5 group hover:bg-white/10 transition-colors"
-                >
-                   <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-[#62B6CB] group-hover:scale-110 transition-transform">
-                      {item.icon}
-                   </div>
-                   <div className="flex-1">
-                      <h4 className="text-sm font-bold text-white">{item.title}</h4>
-                      <p className="text-[10px] text-white/40 font-medium">{item.desc}</p>
-                   </div>
-                   <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-white/40 group-hover:translate-x-1 transition-all" />
-                </motion.div>
-              ))}
-           </div>
-        </div>
+            </div>
+            
+            <div className="space-y-4">
+              {claims.length > 0 ? (
+                claims.map((claim, i) => (
+                  <motion.div 
+                    key={claim.claim_id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    onClick={() => navigate(`/claim-details/${claim.claim_id}`)}
+                    className="bg-white/40 backdrop-blur-sm rounded-[28px] p-6 border border-white/60 flex items-center gap-5 group active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-[#62B6CB]/10 flex items-center justify-center text-[#62B6CB]">
+                      <CreditCard size={22} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <h4 className="text-[15px] font-black text-[#1B4965]">{claim.event_type} Payout</h4>
+                        <span className="text-[15px] font-black text-[#62B6CB]">₹{claim.final_payout}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] text-[#1B4965]/40 font-bold uppercase tracking-wider">{claim.status}</p>
+                        <p className="text-[11px] text-[#1B4965]/40 font-medium">{new Date(claim.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} className="text-[#1B4965]/20" />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="bg-white/20 rounded-[28px] p-8 border border-white/40 border-dashed text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/40 flex items-center justify-center mx-auto mb-4 text-[#1B4965]/20">
+                    <Activity size={24} />
+                  </div>
+                  <p className="text-[14px] text-[#1B4965]/40 font-bold uppercase tracking-widest">No claims yet</p>
+                  <p className="text-[12px] text-[#1B4965]/30 font-medium">Payouts trigger automatically during heat or rain.</p>
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Bottom Status Badge */}
-        <div className="bg-[#62B6CB]/10 rounded-full py-4 px-6 flex items-center justify-between border border-[#62B6CB]/20">
-           <div className="flex items-center gap-3">
+          {/* Quick Stats / Info */}
+          <div className="bg-[#62B6CB]/10 rounded-[32px] py-5 px-6 flex items-center justify-between border border-[#62B6CB]/20">
+            <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-[#62B6CB] shadow-[0_0_10px_#62B6CB]" />
-              <span className="text-xs font-black text-white/80 uppercase tracking-wider">System Operational</span>
-           </div>
-           <span className="text-[10px] font-bold text-[#62B6CB]">100% Uptime</span>
-        </div>
+              <span className="text-[12px] font-black text-[#1B4965]/80 uppercase tracking-wider">WIVE AI Detection Online</span>
+            </div>
+            <span className="text-[10px] font-bold text-[#62B6CB] uppercase">100% Uptime</span>
+          </div>
 
+        </main>
       </div>
+      
       <BottomNav />
-    </MobileContainer>
+    </div>
   );
 }

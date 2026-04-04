@@ -99,6 +99,9 @@ export const apiService = {
   },
   
   worker: {
+    getMe: () =>
+      api.get<GenericResponse>("/workers/me"),
+
     captureLocation: (payload: { lat?: number; lng?: number; city?: string; zone?: string }) =>
       api.post<GenericResponse>("/workers/location", payload),
     
@@ -113,6 +116,9 @@ export const apiService = {
   },
 
   policy: {
+    getStatus: () =>
+      api.get<GenericResponse>("/policies/status"),
+
     getQuote: (zone: string, income_band: string) =>
       api.post<GenericResponse>("/policies/quote", { zone, income_band }),
     
@@ -121,5 +127,13 @@ export const apiService = {
     
     activate: (payload: { tier: string }) =>
       api.post<GenericResponse>("/policies/activate", payload),
+  },
+
+  claims: {
+    getMyClaims: () =>
+      api.get<any[]>("/claims/me"),
+    
+    getClaim: (claimId: string) =>
+      api.get<any>(`/claims/${claimId}`),
   }
 };
