@@ -20,10 +20,6 @@ import { toast } from "sonner";
 
 /* ─────────────────────────────────────────
    Palette & Style Config (Phase 2 Pro)
-   Background: #1B4965 (Deep Navy)
-   Surface: #FFFFFF (Pure White)
-   Interactive: #62B6CB (Accent Blue)
-   Success: #5FA8D3 (Muted Sky)
 ───────────────────────────────────────── */
 
 type Step = "phone" | "otp" | "mpin" | "loading";
@@ -68,17 +64,21 @@ const itemVariants = {
 function PhoneStep({
   onDone,
 }: {
-  onDone: (phone: string) => void;
+  onDone: (phone: string, data: any) => void;
 }) {
-  const [phone, setPhone] = useState("");
+  const storePhone = useAuthStore(s => s.phone);
+  const [phone, setPhone] = useState(storePhone.replace("+91", "") || "");
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
     if (phone.length !== 10) return;
     setLoading(true);
     try {
-      await apiService.auth.sendOtp(phone);
-      onDone(phone);
+      // sendOtp result tells us if user has mPIN
+      const res = await apiService.auth.sendOtp(phone);
+      if (res.data.status === "SUCCESS") {
+        onDone(phone, res.data.data);
+      }
     } catch {
       // Handled by API interceptor
     } finally {
@@ -99,16 +99,16 @@ function PhoneStep({
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/10 ring-1 ring-white/20 shadow-inner">
           <Smartphone className="w-7 h-7 text-white" strokeWidth={1.5} />
         </div>
-        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Identity</h1>
+        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Welcome</h1>
         <p className="text-[#BEE9E8]/70 text-base max-w-[280px] leading-relaxed">
-          Verify your mobile number to access your protected income dashboard.
+          Enter your mobile number to get started with Zyro.
         </p>
       </motion.div>
 
       <motion.div variants={itemVariants} className="space-y-8 flex-1">
         <div className="bg-white rounded-[2rem] p-8 shadow-2xl shadow-black/20">
           <label className="block text-[11px] font-bold mb-4 text-[#1B4965]/40 uppercase tracking-[0.15em]">
-            Registered Mobile Number
+            Mobile Number
           </label>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 h-16 bg-[#F8FAFC] rounded-2xl border border-[#1B4965]/5">
@@ -127,13 +127,6 @@ function PhoneStep({
               autoFocus
             />
           </div>
-          
-          <div className="mt-8 flex items-start gap-3 p-4 bg-[#BEE9E8]/10 rounded-xl border border-[#BEE9E8]/10">
-            <ShieldCheck className="w-5 h-5 text-[#62B6CB] mt-0.5 shrink-0" />
-            <p className="text-xs text-[#1B4965]/60 leading-normal">
-              A secure 6-digit code will be sent to this number for multi-factor authentication.
-            </p>
-          </div>
         </div>
       </motion.div>
 
@@ -147,7 +140,7 @@ function PhoneStep({
             <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
             <span className="flex items-center gap-2">
-              Send OTP <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              Continue <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
           )}
         </Button>
@@ -157,7 +150,7 @@ function PhoneStep({
 }
 
 /* ─────────────────────────────────────────
-   STEP 2 — OTP
+   STEP 2 — OTP (For Registration & Forgot PIN)
 ───────────────────────────────────────── */
 function OTPStep({
   phone,
@@ -216,9 +209,9 @@ function OTPStep({
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/10 ring-1 ring-white/20 shadow-inner text-white">
           <ShieldCheck className="w-7 h-7" strokeWidth={1.5} />
         </div>
-        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Security Check</h1>
+        <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Identity Check</h1>
         <p className="text-[#BEE9E8]/70 text-base leading-relaxed">
-          Sent a 6-digit verification code to <span className="text-white font-bold tracking-wider">+91 {phone}</span>
+          Verify your account via 6-digit OTP sent to <span className="text-white font-bold tracking-wider">+91 {phone}</span>
         </p>
       </motion.div>
 
@@ -244,7 +237,7 @@ function OTPStep({
             onClick={() => apiService.auth.sendOtp(phone)}
             className="text-[#62B6CB] font-bold text-sm hover:text-[#5FA8D3] transition-colors flex items-center justify-center gap-1 mx-auto"
           >
-            Didn't receive code? <span className="underline underline-offset-4">Resend</span>
+            Resend OTP
           </button>
         </div>
       </motion.div>
@@ -258,7 +251,7 @@ function OTPStep({
           {loading ? (
             <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
-            "Verify & Continue"
+            "Verify Identity"
           )}
         </Button>
       </motion.div>
@@ -267,7 +260,7 @@ function OTPStep({
 }
 
 /* ─────────────────────────────────────────
-   STEP 3 — MPIN
+   STEP 3 — MPIN (Fast Sign-in Path)
 ───────────────────────────────────────── */
 function MPINStep({
   phone,
@@ -311,10 +304,10 @@ function MPINStep({
   return (
     <motion.div
       key="mpin"
-      variants={containerVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
+      variants={containerVariants}
       className="flex-1 flex flex-col items-center pt-4"
     >
       <motion.div variants={itemVariants} className="mb-12 text-center flex flex-col items-center">
@@ -322,7 +315,7 @@ function MPINStep({
           <Fingerprint className="w-7 h-7 text-white" strokeWidth={1.5} />
         </div>
         <h1 className="text-3xl font-bold mb-3 text-white tracking-tight">Access Key</h1>
-        <p className="text-[#BEE9E8]/70 text-base">Authorize your login with 4-digit mPIN</p>
+        <p className="text-[#BEE9E8]/70 text-base">Sign in with your 4-digit mPIN</p>
       </motion.div>
 
       <motion.div
@@ -359,16 +352,16 @@ function MPINStep({
       <motion.button
         variants={itemVariants}
         onClick={onForgot}
-        className="text-[#BEE9E8]/60 font-bold text-sm mt-12 hover:text-white transition-colors"
+        className="text-[#62B6CB] font-black text-sm mt-12 hover:text-white transition-colors uppercase tracking-widest"
       >
-        Forgot Access Key? Use OTP
+        Forgot PIN? Use OTP instead
       </motion.button>
     </motion.div>
   );
 }
 
 /* ─────────────────────────────────────────
-   Root — PhoneLogin
+   Root — PhoneLogin (Handles 3 paths)
 ───────────────────────────────────────── */
 export function PhoneLogin() {
   const navigate = useNavigate();
@@ -377,22 +370,40 @@ export function PhoneLogin() {
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhoneLocal] = useState("");
+  const [isRecovering, setIsRecovering] = useState(false);
 
-  const handlePhoneDone = (p: string) => {
+  // STEP 1 Callback
+  const handlePhoneDone = (p: string, data: any) => {
     setPhoneLocal(p);
-    setStep("otp");
-  };
-
-  const handleOTPDone = async (data: any) => {
-    setAuth({ ...data, phone });
+    // RULE: Sign-in should only ask for mPIN if available
     if (data.is_registered && data.has_mpin) {
       setStep("mpin");
     } else {
+      setStep("otp");
+    }
+  };
+
+  // STEP 2 Callback (OTP Success)
+  const handleOTPDone = async (data: any) => {
+    setAuth({ ...data, phone });
+    
+    // Check if we are in Forgot mPIN path
+    if (isRecovering) {
+      await syncOnboarding();
+      // Onboarding step 10 is mPIN Setup
+      navigate("/onboarding"); 
+    } else if (data.is_registered) {
+      // Registered but somehow reached here (e.g. no mPIN set)
+      await syncOnboarding();
+      navigate("/onboarding");
+    } else {
+      // New user registration
       await syncOnboarding();
       navigate("/onboarding");
     }
   };
 
+  // STEP 3 Callback (mPIN Success)
   const handleMPINDone = async (data: any) => {
     setAuth({ ...data, phone });
     await syncOnboarding();
@@ -400,10 +411,17 @@ export function PhoneLogin() {
     setTimeout(() => navigate("/dashboard"), 1500);
   };
 
+  // Recovery Logic
+  const handleForgotPIN = () => {
+    setIsRecovering(true);
+    setStep("otp"); // Switch back to OTP screen
+  };
+
   const handleBack = () => {
     if (step === "phone") navigate("/");
+    else if (step === "otp" && isRecovering) setStep("mpin");
     else if (step === "otp") setStep("phone");
-    else if (step === "mpin") setStep("otp");
+    else if (step === "mpin") setStep("phone");
   };
 
   return (
@@ -421,7 +439,7 @@ export function PhoneLogin() {
         <AnimatePresence mode="wait">
           {step === "phone" && <PhoneStep onDone={handlePhoneDone} />}
           {step === "otp" && <OTPStep phone={phone} onDone={handleOTPDone} />}
-          {step === "mpin" && <MPINStep phone={phone} onDone={handleMPINDone} onForgot={() => setStep("otp")} />}
+          {step === "mpin" && <MPINStep phone={phone} onDone={handleMPINDone} onForgot={handleForgotPIN} />}
           {step === "loading" && (
             <motion.div
               initial={{ opacity: 0 }}

@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ShieldCheck, Zap, ArrowRight, Smartphone, LogIn } from "lucide-react";
+import { useAuthStore } from "../../store/useAuthStore";
 
 /* ─────────────────────────────────────────
    Palette Usage (Phase 2)
@@ -15,6 +16,17 @@ import { ShieldCheck, Zap, ArrowRight, Smartphone, LogIn } from "lucide-react";
 
 export function Welcome() {
   const navigate = useNavigate();
+  const { isAuthenticated, isRegistered } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (isRegistered) {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
+    }
+  }, [isAuthenticated, isRegistered, navigate]);
 
   return (
     <MobileContainer style={{ backgroundColor: "#BEE9E8" }}>
