@@ -21,12 +21,7 @@ api.interceptors.request.use((config) => {
 
 // Response interceptor — handle errors and extract data from GenericResponse
 api.interceptors.response.use(
-  (response) => {
-    // If backend uses GenericResponse { status, message, data }, 
-    // we might want to return response.data.data directly for convenience,
-    // but let's keep the full response.data for status checks if needed.
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const { response } = error;
 
@@ -38,11 +33,15 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Backend returns detail as string or object
     const detail = response?.data?.detail;
     const message = typeof detail === 'string' ? detail : (detail?.message || response?.data?.message || "Something went wrong.");
     
-    // Don't toast for validation errors handled by forms
+    // Handle invalid transition by syncing store
+    if (message === "Invalid onboarding transition" || (typeof detail === 'object' && detail?.message === "Invalid onboarding transition")) {
+      const { useOnboardingStore } = await import("../store/useOnboardingStore");
+      useOnboardingStore.getState().syncWithBackend();
+    }
+
     if (response?.status !== 422) {
       toast.error(message);
     }
@@ -57,7 +56,6 @@ export interface GenericResponse<T = any> {
   data: T;
 }
 
-// Helper to normalize phone numbers
 const normalizePhone = (phone: string) => {
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 10) return `+91${digits}`;
@@ -65,32 +63,13 @@ const normalizePhone = (phone: string) => {
   return phone;
 };
 
-// Unified API client
 export const apiService = {
   auth: {
     sendOtp: (phone: string) => 
-      api.post<GenericResponse<{ otp: string }>>("/auth/send-otp", { phone: normalizePhone(phone) }),
+      api.post<GenericResponse>("/auth/send-otp", { phone: normalizePhone(phone) }),
     
     verifyOtp: (phone: string, otp: string) => 
       api.post<GenericResponse>("/auth/verify-otp", { phone: normalizePhone(phone), otp }),
-    
-    permissions: (payload: { location_consent: boolean; notification_consent: boolean; data_consent: boolean }) =>
-      api.post<GenericResponse>("/auth/permissions", payload),
-    
-    sendAadhaarOtp: (aadhaar_number: string) =>
-      api.post<GenericResponse<{ otp: string }>>("/auth/send-aadhaar-otp", { aadhaar_number }),
-    
-    verifyAadhaarOtp: (otp: string) =>
-      api.post<GenericResponse>("/auth/verify-aadhaar-otp", { otp }),
-    
-    verifySelfie: (payload: string) =>
-      api.post<GenericResponse>("/auth/verify-selfie", { selfie_mock_payload: payload }),
-    
-    setMpin: (mpin: string) =>
-      api.post<GenericResponse>("/auth/set-mpin", { mpin }),
-    
-    loginMpin: (phone: string, mpin: string) =>
-      api.post<GenericResponse>("/auth/login-mpin", { phone: normalizePhone(phone), mpin }),
     
     getOnboardingStatus: () =>
       api.get<GenericResponse>("/auth/onboarding-status"),
@@ -98,24 +77,10 @@ export const apiService = {
     logout: () => api.post<GenericResponse>("/auth/logout"),
   },
   
-  claims: {
-    getMyClaims: () =>
-      api.get<GenericResponse<any[]>>("/claims/me"),
-    
-    getClaim: (id: string) =>
-      api.get<GenericResponse<any>>(`/claims/${id}`),
-    
-    approve: (id: string) =>
-      api.post<GenericResponse>(`/claims/${id}/approve`),
-    
-    payout: (id: string) =>
-      api.post<GenericResponse>(`/claims/${id}/payout`),
-  },
-
   worker: {
     getMe: () =>
-      api.get<GenericResponse>("/workers/me"),
-
+      api.post<GenericResponse>("/workers/register", { confirm: true }), // Using register as idempotent me
+    
     captureLocation: (payload: { lat?: number; lng?: number; city?: string; zone?: string }) =>
       api.post<GenericResponse>("/workers/location", payload),
     
@@ -130,24 +95,24 @@ export const apiService = {
   },
 
   policy: {
-    getStatus: () =>
-      api.get<GenericResponse>("/policies/status"),
-
-    getQuote: (zone: string, income_band: string) =>
+    getQuote: (zone?: string, income_band?: string) =>
       api.post<GenericResponse>("/policies/quote", { zone, income_band }),
     
-    acknowledge: (payload: { premium_acknowledged: boolean; coverage_acknowledged: boolean; exclusions_acknowledged: boolean; terms_accepted: boolean; privacy_accepted: boolean }) =>
+    acknowledge: (payload: any) =>
       api.post<GenericResponse>("/policies/acknowledge", payload),
     
     activate: (payload: { tier: string }) =>
       api.post<GenericResponse>("/policies/activate", payload),
+    
+    getStatus: () =>
+      api.get<GenericResponse>("/policies/status"),
   },
 
   claims: {
     getMyClaims: () =>
-      api.get<any[]>("/claims/me"),
+      api.get<GenericResponse<any[]>>("/claims/me"),
     
-    getClaim: (claimId: string) =>
-      api.get<any>(`/claims/${claimId}`),
+    getClaim: (id: string) =>
+      api.get<GenericResponse<any>>(`/claims/${id}`),
   }
 };
