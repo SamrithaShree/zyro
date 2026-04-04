@@ -12,247 +12,260 @@ import {
   ChevronDown,
   Info,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Check,
+  Wallet,
+  ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { apiService } from "../../services/api";
 import { StepContainer } from "../../design-system/layouts/StepContainer";
 import { StickyCTA } from "../../design-system/layouts/StickyCTA";
 import { Button } from "../../design-system/components/Button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
 import "../../design-system/styles/atmosphere.css";
+import { toast } from "sonner";
 
 export function ClaimDetails() {
   const { claimId } = useParams<{ claimId: string }>();
   const navigate = useNavigate();
   const [claim, setClaim] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [executing, setExecuting] = useState(false);
+  const [payoutSuccess, setPayoutSuccess] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>(["event", "eligibility", "calculation"]);
 
-  useEffect(() => {
-    const fetchClaim = async () => {
-      if (!claimId) return;
-      try {
-        const res = await apiService.claims.getClaim(claimId);
-        if (res.data.status === "SUCCESS") {
-          setClaim(res.data.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch claim", err);
-      } finally {
-        setLoading(false);
+  const fetchClaim = async () => {
+    if (!claimId) return;
+    try {
+      const res = await apiService.claims.getClaim(claimId);
+      if (res.data) {
+        setClaim(res.data);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch claim", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchClaim();
+    // Poll every 3 seconds while on this screen to catch status updates
+    const interval = setInterval(fetchClaim, 3000);
+    return () => clearInterval(interval);
   }, [claimId]);
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => 
-      prev.includes(section) ? prev.filter(s => s !== section) : [...prev, section]
-    );
+  // Auto-show success if claim is already PAID when landing
+  useEffect(() => {
+    if (claim?.status === "PAID" && !payoutSuccess) {
+      setPayoutSuccess(true);
+    }
+  }, [claim?.status]);
+
+  // Auto-execute payout when claim becomes ELIGIBLE/PAYOUT_READY
+  const autoPayoutFiredRef = React.useRef(false);
+  useEffect(() => {
+    if (
+      !autoPayoutFiredRef.current &&
+      (claim?.status === "ELIGIBLE" || claim?.status === "PAYOUT_READY") &&
+      !payoutSuccess &&
+      !executing
+    ) {
+      autoPayoutFiredRef.current = true;
+      // Small delay for UX — let the user see the screen momentarily
+      setTimeout(() => {
+        handleExecutePayout();
+      }, 1500);
+    }
+  }, [claim?.status]);
+
+  const handleExecutePayout = async () => {
+    setExecuting(true);
+    try {
+      const res = await apiService.claims.payout(claimId!);
+      if (res.data.status === "SUCCESS") {
+        setPayoutSuccess(true);
+        toast.success("Payout Transferred Successfully");
+        setTimeout(() => {
+           navigate("/dashboard");
+        }, 3000);
+      }
+    } catch (err) {
+      toast.error("Payout execution failed");
+    } finally {
+      setExecuting(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="zyro-root font-sans">
+      <div className="zyro-root font-sans bg-[#BEE9E8]">
         <div className="zyro-atmosphere" />
         <div className="zyro-container flex items-center justify-center min-h-screen">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 animate-spin text-[#62B6CB]" />
-            <p className="text-[#1B4965]/60 font-bold uppercase tracking-widest text-[10px]">Retrieving Claim Analysis</p>
+            <p className="text-[#1B4965]/60 font-black uppercase tracking-widest text-[10px]">Synchronizing Nodes</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!claim) {
-    return (
-      <StepContainer step={1} totalSteps={1} title="Claim Not Found" onBack={() => navigate("/dashboard")}>
-        <div className="text-center py-20">
-          <ShieldAlert className="w-16 h-16 text-[#FF6B35] mx-auto mb-4 opacity-20" />
-          <p className="text-[#1B4965]/60 font-medium text-sm">This claim analysis might have expired or doesn't exist.</p>
-        </div>
-      </StepContainer>
-    );
-  }
+  if (!claim) return null;
 
-  const isPaid = claim.status === "PAID" || claim.status === "PAYOUT_READY";
+  const isPaid = claim.status === "PAID" || payoutSuccess;
   const isRejected = claim.status === "REJECTED";
+  const canPayout = (claim.status === "ELIGIBLE" || claim.status === "PAYOUT_READY") && !payoutSuccess;
 
   return (
-    <StepContainer 
-      step={1} 
-      totalSteps={1} 
-      title="Claim Analysis"
-      subtext={`ID: ${claim.claim_id.slice(0, 8).toUpperCase()}`}
-      onBack={() => navigate("/dashboard")}
-    >
-      <div className="space-y-6 pb-24">
-        
-        {/* Main Status Banner */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`rounded-[32px] p-6 border-2 flex items-center justify-between shadow-sm backdrop-blur-md ${
-            isPaid 
-              ? "bg-[#00FF87]/5 border-[#00FF87]/20 text-[#00FF87]" 
-              : isRejected 
-              ? "bg-[#FF6B35]/5 border-[#FF6B35]/20 text-[#FF6B35]"
-              : "bg-[#62B6CB]/5 border-[#62B6CB]/20 text-[#62B6CB]"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${
-              isPaid ? "bg-[#00FF87] text-[#1B4965]" : isRejected ? "bg-[#FF6B35] text-white" : "bg-[#62B6CB] text-white"
-            }`}>
-              {isPaid ? <ShieldCheck size={28} /> : isRejected ? <ShieldAlert size={28} /> : <Shield size={28} />}
-            </div>
-            <div>
-              <div className="text-lg font-black italic uppercase tracking-tighter leading-tight">{claim.status}</div>
-              <div className="text-[10px] font-bold opacity-60">
-                {isPaid ? `Settled on ${new Date(claim.created_at).toLocaleDateString()}` : "Automated Detection"}
-              </div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-black tracking-tighter italic text-[#1B4965]">₹{claim.final_payout}</div>
-            <div className="text-[10px] font-black opacity-40 uppercase tracking-widest">Payout</div>
-          </div>
-        </motion.div>
+    <div className="zyro-root font-sans">
+      <div className="zyro-atmosphere" />
+      
+      <div className="zyro-container Independent-scroll pb-32">
+        <header className="px-6 pt-10 pb-4 flex items-center justify-between relative z-10">
+           <button onClick={() => navigate("/dashboard")} className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#1B4965] shadow-lg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+           </button>
+           <div className="text-right">
+              <span className="text-[10px] font-black text-[#62B6CB] uppercase tracking-[0.2em]">Transaction ID</span>
+              <p className="text-[12px] font-black text-[#1B4965] tracking-widest">{claim.claim_id.slice(0, 12).toUpperCase()}</p>
+           </div>
+        </header>
 
-        {/* Automated Reasoning */}
-        <div className="bg-white/40 backdrop-blur-md rounded-[28px] p-6 border border-white/60 space-y-4 shadow-sm">
-           <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                 <Zap className="w-4 h-4 text-[#62B6CB]" />
-                 <h3 className="text-[10px] font-black text-[#1B4965]/40 uppercase tracking-widest">WIVE Logic Engine</h3>
+        <main className="px-6 space-y-6 relative z-10">
+           
+           {/* Status Banner */}
+           <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-[40px] p-8 border-2 shadow-2xl flex items-center justify-between relative overflow-hidden ${
+              isPaid ? "bg-[#00FF87] border-[#00FF87] text-[#1B4965]" : "bg-white border-white text-[#1B4965]"
+            }`}
+           >
+              <div className="space-y-1 relative z-10">
+                 <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isPaid ? "text-[#1B4965]/40" : "text-[#62B6CB]"}`}>
+                    Current Phase
+                 </span>
+                 <h2 className="text-3xl font-black italic uppercase tracking-tight leading-none">
+                    {isPaid ? "Paid" : claim.status === 'REJECTED' ? "Rejected" : "Qualified"}
+                 </h2>
               </div>
-              <p className="text-sm font-medium text-[#1B4965]/80 leading-relaxed italic">
+              <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center shadow-xl relative z-10 ${isPaid ? "bg-[#1B4965] text-[#00FF87]" : "bg-[#62B6CB] text-white"}`}>
+                 {isPaid ? <Check size={32} strokeWidth={4} /> : <Shield size={32} />}
+              </div>
+              {isPaid && <div className="absolute inset-0 bg-white/10 animate-pulse" />}
+           </motion.div>
+
+           {/* Financial Summary */}
+           <div className="bg-[#1B4965] rounded-[40px] p-8 text-white shadow-2xl space-y-8">
+              <div className="flex justify-between items-end">
+                 <div className="space-y-1">
+                    <span className="text-[10px] font-black text-[#62B6CB] uppercase tracking-[0.2em]">Benefit Amount</span>
+                    <h3 className="text-[48px] font-black italic leading-none tracking-tighter text-[#00FF87]">₹{claim.final_payout}</h3>
+                 </div>
+                 <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Confidence</span>
+                    <span className="text-sm font-black text-[#62B6CB]">{(claim.confidence_score * 100).toFixed(1)}%</span>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="bg-white/5 p-5 rounded-3xl border border-white/5">
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest block mb-1">Estimated Loss</span>
+                    <span className="text-xl font-black italic">₹{claim.estimated_loss}</span>
+                 </div>
+                 <div className="bg-white/5 p-5 rounded-3xl border border-white/5">
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest block mb-1">Protection %</span>
+                    <span className="text-xl font-black italic">{(claim.protection_ratio * 100).toFixed(0)}%</span>
+                 </div>
+              </div>
+           </div>
+
+           {/* AI Explanation */}
+           <div className="bg-white/40 backdrop-blur-xl rounded-[32px] p-6 border border-white shadow-sm space-y-4">
+              <div className="flex items-center gap-2">
+                 <Zap size={14} className="text-[#62B6CB]" fill="currentColor" />
+                 <span className="text-[10px] font-black text-[#1B4965]/40 uppercase tracking-widest italic">WIVE Logic Output</span>
+              </div>
+              <p className="text-[15px] font-bold text-[#1B4965]/80 italic leading-relaxed">
                  "{claim.explanation}"
               </p>
            </div>
-           
-           {claim.why_eligible && (
-             <div className="pt-4 border-t border-[#1B4965]/5 space-y-2">
-                <div className="flex items-center gap-2">
-                   <CheckCircle2 className="w-4 h-4 text-[#62B6CB]" />
-                   <h3 className="text-[10px] font-black text-[#1B4965]/40 uppercase tracking-widest">Eligibility Verdict</h3>
-                </div>
-                <p className="text-xs font-bold text-[#62B6CB]/80 leading-relaxed">
-                   {claim.why_eligible}
-                </p>
-             </div>
-           )}
-        </div>
 
-        {/* Breakdown Sections */}
-        <div className="space-y-3">
-          
-          <CollapsibleSection
-            id="event"
-            title="Trigger Details"
-            icon={<CloudRain className="w-5 h-5 text-[#62B6CB]" />}
-            isOpen={openSections.includes("event")}
-            onToggle={toggleSection}
-          >
-            <div className="space-y-4">
-               <DataRow label="Event Zone" value={claim.validation_breakdown.zone_match ? "Verified Region" : "Outside Area"} />
-               <DataRow label="Severity Factor" value={`${claim.severity_factor}x`} />
-               <DataRow label="Disruption Duration" value={`${claim.impact_reasoning.event_duration_hours} hrs`} />
-               <DataRow label="Zone" value={claim.zone || "Anna Nagar"} />
-            </div>
-          </CollapsibleSection>
+           {/* Breakdown Sections */}
+           <div className="space-y-3">
+              <CollapsibleSection title="Trigger Details" icon={<CloudRain className="w-5 h-5" />} defaultOpen>
+                 <div className="space-y-4 pt-2">
+                    <DataRow label="Event Zone" value={claim.zone || "Anna Nagar"} />
+                    <DataRow label="Severity" value={`${claim.severity_factor}x`} />
+                    <DataRow label="Duration" value={`${claim.impact_reasoning?.event_duration_hours || 0} hrs`} />
+                 </div>
+              </CollapsibleSection>
 
-          <CollapsibleSection
-            id="eligibility"
-            title="WIVE Verification"
-            icon={<ShieldCheck className="w-5 h-5 text-[#00FF87]" />}
-            isOpen={openSections.includes("eligibility")}
-            onToggle={toggleSection}
-          >
-            <div className="space-y-3">
-               <CheckRow label="Policy Active" passed={claim.validation_breakdown.policy_active} />
-               <CheckRow label="Trigger Covered" passed={claim.validation_breakdown.trigger_covered} />
-               <CheckRow label="Within Window" passed={claim.validation_breakdown.within_policy_window} />
-               <CheckRow label="Hours Overlap" passed={claim.validation_breakdown.working_hours_overlap} />
-               <CheckRow label="Intent Detected" passed={claim.validation_breakdown.earning_intent_detected} />
-            </div>
-          </CollapsibleSection>
+              <CollapsibleSection title="WIVE Validation" icon={<ShieldCheck className="w-5 h-5 text-[#00FF87]" />}>
+                 <div className="space-y-3 pt-2">
+                    <CheckRow label="Active Policy Node" passed={claim.validation_breakdown?.policy_active} />
+                    <CheckRow label="Parametric Match" passed={claim.validation_breakdown?.trigger_covered} />
+                    <CheckRow label="Operating Zone Lock" passed={claim.validation_breakdown?.zone_match} />
+                    <CheckRow label="Shift Window Overlap" passed={claim.validation_breakdown?.working_hours_overlap} />
+                 </div>
+              </CollapsibleSection>
+           </div>
 
-          <CollapsibleSection
-            id="calculation"
-            title="Payout Formulation"
-            icon={<TrendingDown className="w-5 h-5 text-[#FF6B35]" />}
-            isOpen={openSections.includes("calculation")}
-            onToggle={toggleSection}
-          >
-            <div className="space-y-4">
-               <div className="bg-[#1B4965]/5 p-4 rounded-2xl space-y-3">
-                  <DataRow label="Estimated Loss" value={`₹${claim.estimated_loss}`} />
-                  <DataRow label="Protection Ratio" value={`${Math.round((claim.final_payout / claim.estimated_loss) * 100)}%`} />
-                  <div className="h-px bg-[#1B4965]/5" />
-                  <DataRow label="Uncovered (Self)" value={`₹${claim.estimated_loss - claim.final_payout}`} />
-               </div>
-               
-               <div className="px-2 space-y-2">
-                  <div className="text-[9px] font-black text-[#1B4965]/20 uppercase tracking-widest mb-2 text-center italic">Calibrated Formula</div>
-                  <div className="text-center font-mono text-[10px] text-[#1B4965]/60 leading-relaxed">
-                     (Hourly Benefit × Duration × Severity) <br/>
-                     × Trust Multiplier ({claim.trust_multiplier_used})
-                  </div>
-               </div>
-            </div>
-          </CollapsibleSection>
+           {/* Snapshot Disclaimer */}
+           <div className="p-6 bg-white/20 rounded-[32px] border border-[#1B4965]/5 flex gap-4 items-start">
+              <Info size={18} className="text-[#1B4965]/40 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-[#1B4965]/60 font-bold leading-relaxed italic uppercase">
+                 This is a deterministic settlement. Values were locked at the point of detection to ensure zero volatility for the partner.
+              </p>
+           </div>
 
-        </div>
-
-        {/* Snapshot Info */}
-        <div className="p-5 bg-white/20 rounded-[24px] border border-white/40">
-          <div className="flex gap-3">
-            <Info size={16} className="text-[#1B4965]/40 mt-0.5 shrink-0" />
-            <p className="text-[11px] text-[#1B4965]/60 leading-relaxed font-medium">
-              This payout analysis is a point-in-time snapshot. Final settlement values are locked at the time of detection to prevent volatility.
-            </p>
-          </div>
-        </div>
-
+        </main>
       </div>
 
-      <StickyCTA>
-        <Button onClick={() => navigate("/dashboard")}>
-          Back to Dashboard
-        </Button>
+      <StickyCTA className={payoutSuccess ? "hidden" : ""}>
+         {canPayout ? (
+           <Button onClick={handleExecutePayout} disabled={executing} className="h-16 rounded-[28px] shadow-2xl shadow-[#62B6CB]/20 flex items-center justify-center gap-3">
+              {executing ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <>
+                  <Wallet size={20} />
+                  <span>Execute Instant Payout</span>
+                </>
+              )}
+           </Button>
+         ) : (
+           <Button onClick={() => navigate("/dashboard")} variant="secondary" className="h-16 rounded-[28px] border-[#1B4965]/10 text-[#1B4965]">
+              Return to Command Center
+           </Button>
+         )}
       </StickyCTA>
-    </StepContainer>
-  );
-}
 
-function CollapsibleSection({ id, title, icon, isOpen, onToggle, children }: any) {
-  return (
-    <div className="bg-white/20 rounded-[28px] border border-white/40 overflow-hidden">
-      <button 
-        onClick={() => onToggle(id)}
-        className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/10 transition-colors"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-white/40 flex items-center justify-center">
-            {icon}
-          </div>
-          <span className="text-[14px] font-black text-[#1B4965] uppercase tracking-tight">{title}</span>
-        </div>
-        <ChevronDown size={18} className={`text-[#1B4965]/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-      </button>
-      
+      {/* Payout Success Modal */}
       <AnimatePresence>
-        {isOpen && (
+        {payoutSuccess && (
           <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="px-6 pb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[110] bg-[#00FF87] flex flex-col items-center justify-center p-8 text-center"
           >
-            {children}
+             <motion.div
+               initial={{ scale: 0.8, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               className="space-y-10"
+             >
+                <div className="w-32 h-32 rounded-[40px] bg-[#1B4965] mx-auto flex items-center justify-center shadow-2xl">
+                   <Check size={64} className="text-[#00FF87]" strokeWidth={4} />
+                </div>
+                <div className="space-y-3">
+                   <h2 className="text-4xl font-black text-[#1B4965] italic uppercase tracking-tighter">Payout <br/>Executed</h2>
+                   <p className="text-[#1B4965]/60 font-bold uppercase tracking-widest text-sm">₹{claim.final_payout} sent to UPI</p>
+                </div>
+                <div className="bg-white/20 p-6 rounded-[32px] border border-[#1B4965]/5">
+                   <p className="text-[#1B4965] font-black text-xs uppercase tracking-widest">Balance Updated</p>
+                </div>
+             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -260,22 +273,48 @@ function CollapsibleSection({ id, title, icon, isOpen, onToggle, children }: any
   );
 }
 
-function DataRow({ label, value }: { label: string; value: string }) {
+function CollapsibleSection({ title, icon, children, defaultOpen = false }: any) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-bold text-[#1B4965]/40 uppercase tracking-wider">{label}</span>
-      <span className="text-sm font-black text-[#1B4965] italic">{value}</span>
+    <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden">
+       <button onClick={() => setIsOpen(!isOpen)} className="w-full px-6 py-5 flex items-center justify-between text-[#1B4965]">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 rounded-xl bg-[#1B4965]/5 flex items-center justify-center text-[#62B6CB]">
+                {icon}
+             </div>
+             <span className="text-sm font-black uppercase tracking-tight italic">{title}</span>
+          </div>
+          <ChevronDown className={`w-5 h-5 text-[#1B4965]/20 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+       </button>
+       <AnimatePresence>
+          {isOpen && (
+            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+               <div className="px-6 pb-6 border-t border-[#1B4965]/5">
+                  {children}
+               </div>
+            </motion.div>
+          )}
+       </AnimatePresence>
     </div>
   );
 }
 
-function CheckRow({ label, passed }: { label: string; passed: boolean }) {
+function DataRow({ label, value }: any) {
+  return (
+    <div className="flex items-center justify-between">
+       <span className="text-[10px] font-black text-[#1B4965]/40 uppercase tracking-widest">{label}</span>
+       <span className="text-sm font-black text-[#1B4965] italic uppercase">{value}</span>
+    </div>
+  );
+}
+
+function CheckRow({ label, passed }: any) {
   return (
     <div className="flex items-center gap-3">
-      <div className={`w-5 h-5 rounded-md flex items-center justify-center ${passed ? "bg-[#00FF87]/20 text-[#00FF87]" : "bg-[#FF6B35]/20 text-[#FF6B35]"}`}>
-        <span className="text-xs font-black">{passed ? "✓" : "×"}</span>
-      </div>
-      <span className={`text-sm font-bold ${passed ? "text-[#1B4965]/80" : "text-[#1B4965]/30"}`}>{label}</span>
+       <div className={`w-5 h-5 rounded-lg flex items-center justify-center ${passed ? "bg-[#00FF87]/20 text-[#00FF87]" : "bg-[#FF6B35]/20 text-[#FF6B35]"}`}>
+          {passed ? <Check size={12} strokeWidth={4} /> : <ShieldAlert size={12} />}
+       </div>
+       <span className={`text-[12px] font-bold ${passed ? "text-[#1B4965]" : "text-[#1B4965]/40"} uppercase tracking-tighter`}>{label}</span>
     </div>
   );
 }

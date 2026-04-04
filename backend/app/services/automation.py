@@ -221,6 +221,11 @@ class AutomationService:
         
         with session.db_lock:
             session.claims[claim_id] = claim
+        
+        # AUTOMATION: If high confidence, execute payout immediately
+        if status == ClaimStatus.ELIGIBLE and confidence_lane == "HIGH":
+            print(f"DEBUG: Auto-executing payout for high-confidence claim {claim_id}")
+            AutomationService.execute_payout(claim_id)
             
         return claim
 

@@ -33,7 +33,7 @@ export function WorkDetailsStep() {
     setLoading(true);
     try {
       await apiService.worker.saveWorkProfile({
-        platform: data.platform,
+        platform: data.platform || "Other",
         working_hours_per_day: parseInt(data.workingHoursPerDay),
         days_worked_per_week: parseInt(data.daysPerWeek),
         income_band: data.incomeBand

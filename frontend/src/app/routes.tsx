@@ -10,9 +10,11 @@ import { MPinLogin } from "./screens/MPinLogin";
 import { MPinSetup } from "./screens/MPinSetup";
 import { Dashboard } from "./screens/Dashboard";
 import { Profile } from "./screens/Profile";
+import { Activity } from "./screens/Activity";
 import { ClaimDetails } from "./screens/ClaimDetails";
 import { OnboardingFlow } from "../features/onboarding/OnboardingFlow";
 import { PlanSelection } from "./screens/PlanSelection";
+import { SimulationScreen } from "./screens/SimulationScreen";
 
 export const router = createBrowserRouter([
   {
@@ -44,8 +46,16 @@ export const router = createBrowserRouter([
     element: <AuthGuard><Dashboard /></AuthGuard>,
   },
   {
+    path: "/activity",
+    element: <AuthGuard><Activity /></AuthGuard>,
+  },
+  {
     path: "/profile",
     element: <AuthGuard><Profile /></AuthGuard>,
+  },
+  {
+    path: "/simulate",
+    element: <AuthGuard><SimulationScreen /></AuthGuard>,
   },
   {
     path: "/claim-details/:claimId",

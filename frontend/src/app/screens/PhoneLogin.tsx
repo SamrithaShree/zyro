@@ -22,7 +22,6 @@ export function PhoneLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Focus ring class from design system
   const focusClass = "focus:ring-2 focus:ring-[#62B6CB] focus:ring-offset-2 outline-none transition-all";
 
   const handleSendOtp = async () => {
@@ -58,13 +57,11 @@ export function PhoneLogin() {
       const res = await apiService.auth.verifyOtp(phone, otp);
       if (res.data.status === "SUCCESS") {
         const authData = res.data.data;
-        // setAuth updates the store
-        setAuth({ ...authData, phone });
+        setAuth({ ...authData, phone: `+91${phone}` });
         await syncOnboarding();
         
         toast.success("Identity verified");
 
-        // Explicit navigation based on registration status (PUSH, NO REPLACE)
         if (authData.is_registered && authData.has_mpin) {
           navigate("/mpin-login");
         } else {
@@ -73,7 +70,7 @@ export function PhoneLogin() {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid OTP");
-      setOtp(""); // Clear OTP on error
+      setOtp("");
     } finally {
       setLoading(false);
     }
@@ -162,7 +159,6 @@ export function PhoneLogin() {
                         newOtp[i] = val;
                         const finalOtp = newOtp.join("").slice(0, 6);
                         setOtp(finalOtp);
-                        // Move to next input
                         if (i < 5) {
                           const next = e.target.nextElementSibling as HTMLInputElement;
                           next?.focus();

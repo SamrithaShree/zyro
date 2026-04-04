@@ -86,6 +86,7 @@ const BACKEND_STATE_TO_STEP: Record<string, number> = {
   "READY": 12
 };
 
+
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({

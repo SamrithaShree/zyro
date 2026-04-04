@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 
 export function SelfieStep() {
-  const { updateData, nextStep, syncWithBackend } = useOnboardingStore();
+  const { updateData, syncWithBackend } = useOnboardingStore();
   const [status, setStatus] = useState<"idle" | "scanning" | "success">("idle");
   const [loading, setLoading] = useState(false);
 
@@ -114,8 +114,8 @@ export function SelfieStep() {
             {status === "scanning" ? "Scanning..." : "Start Biometric Scan"}
           </Button>
         ) : (
-          <Button onClick={() => {}}>
-            Proceeding...
+          <Button onClick={syncWithBackend}>
+            Continue
           </Button>
         )}
       </StickyCTA>

@@ -123,14 +123,25 @@ export const apiService = {
       api.post<GenericResponse>("/policies/activate", payload),
     
     getStatus: () =>
-      api.get<GenericResponse>("/policies/status"),
+      api.get<any>("/policies/status"),
   },
 
   claims: {
     getMyClaims: () =>
-      api.get<GenericResponse<any[]>>("/claims/me"),
+      api.get<any[]>("/claims/me"),
     
     getClaim: (id: string) =>
-      api.get<GenericResponse<any>>(`/claims/${id}`),
+      api.get<any>(`/claims/${id}`),
+    
+    payout: (id: string) =>
+      api.post<GenericResponse>(`/claims/${id}/payout`),
+  },
+
+  events: {
+    simulate: (payload: { zone: string; trigger_type: string; severity: number; source: string; description?: string }) =>
+      api.post<any>("/events/simulate", payload),
+    
+    getActive: () =>
+      api.get<any>("/events/active"),
   }
 };

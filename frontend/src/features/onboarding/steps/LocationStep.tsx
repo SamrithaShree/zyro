@@ -43,8 +43,8 @@ export function LocationStep() {
           updateData({
             lat: latitude,
             lng: longitude,
-            city: "Bengaluru",
-            zone: "Koramangala"
+            city: "Chennai",
+            zone: "Anna Nagar"
           });
           setState("success");
         }, 2000);
