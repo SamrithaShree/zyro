@@ -71,6 +71,24 @@ export const apiService = {
     verifyOtp: (phone: string, otp: string) => 
       api.post<GenericResponse>("/auth/verify-otp", { phone: normalizePhone(phone), otp }),
     
+    permissions: (payload: { location_consent: boolean; notification_consent: boolean; data_consent: boolean }) =>
+      api.post<GenericResponse>("/auth/permissions", payload),
+    
+    sendAadhaarOtp: (aadhaar_number: string) =>
+      api.post<GenericResponse<{ otp: string }>>("/auth/send-aadhaar-otp", { aadhaar_number }),
+    
+    verifyAadhaarOtp: (otp: string) =>
+      api.post<GenericResponse>("/auth/verify-aadhaar-otp", { otp }),
+    
+    verifySelfie: (payload: string) =>
+      api.post<GenericResponse<{ confidence_score: number }>>("/auth/verify-selfie", { selfie_mock_payload: payload }),
+
+    setMpin: (mpin: string) =>
+      api.post<GenericResponse>("/auth/set-mpin", { mpin }),
+
+    loginMpin: (phone: string, mpin: string) =>
+      api.post<GenericResponse>("/auth/login-mpin", { phone: normalizePhone(phone), mpin }),
+
     getOnboardingStatus: () =>
       api.get<GenericResponse>("/auth/onboarding-status"),
     

@@ -13,7 +13,6 @@ import { Profile } from "./screens/Profile";
 import { ClaimDetails } from "./screens/ClaimDetails";
 import { OnboardingFlow } from "../features/onboarding/OnboardingFlow";
 import { PlanSelection } from "./screens/PlanSelection";
-import { ClaimDetails } from "./screens/ClaimDetails";
 
 export const router = createBrowserRouter([
   {
@@ -43,10 +42,6 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <AuthGuard><Dashboard /></AuthGuard>,
-  },
-  {
-    path: "/claim-details/:id",
-    element: <AuthGuard><ClaimDetails /></AuthGuard>,
   },
   {
     path: "/profile",
