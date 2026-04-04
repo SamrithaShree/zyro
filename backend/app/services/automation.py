@@ -87,10 +87,20 @@ class AutomationService:
             rejection_reason = "No active Zyro policy found for worker."
 
         # 2. Trigger Coverage
-        if active_policy and event.trigger_type.value in active_policy.covered_triggers:
+        # Normalize event trigger name to match policy coverage names
+        trigger_map = {
+            "HEAVY_RAIN": "RAIN",
+            "TRAFFIC_DISRUPTION": "TRAFFIC",
+            "SEVERE_AQI": "AIR_QUALITY",
+            "EXTREME_HEAT": "HEAT",
+            "PLATFORM_DOWNTIME": "PLATFORM_DOWNTIME"
+        }
+        normalized_trigger = trigger_map.get(event.trigger_type.value, event.trigger_type.value)
+
+        if active_policy and normalized_trigger in active_policy.covered_triggers:
             breakdown.trigger_covered = True
         elif active_policy:
-            rejection_reason = f"Your policy does not cover {event.trigger_type.value}."
+            rejection_reason = f"Your policy does not cover {normalized_trigger} (from {event.trigger_type.value})."
 
         # 3. Working Hours Overlap & Earning Intent (Simulated for Demo)
         # In a real system, we'd check telemetry. Here we use worker.working_hours_per_day
@@ -192,6 +202,7 @@ class AutomationService:
             status=status,
             impacted_hours=impacted_hours,
             severity_factor=severity_factor,
+            trust_multiplier=trust_multiplier,
             trust_multiplier_used=trust_multiplier,
             raw_payout=raw_payout,
             final_payout=final_payout,
