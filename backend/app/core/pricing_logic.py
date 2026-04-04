@@ -1,4 +1,5 @@
 from typing import Dict, List, Any
+from app.services.ml.disruption_model import predict_disruption_probability
 
 # Zone-level seeded risk data for Phase 2
 ZONE_RISK_DATA: Dict[str, Dict[str, Any]] = {
@@ -74,7 +75,11 @@ def calculate_expected_weekly_loss(income_band: str, zone: str, weekly_working_h
     income = INCOME_BAND_TO_VALUE.get(income_band, 4000)
     risk = ZONE_RISK_DATA.get(zone, ZONE_RISK_DATA["DEFAULT"])
     
-    prob = risk["disruption_probability"]
+    # ML-Powered disruption probability
+    # We simulate with a standard set of triggers for the quote
+    base_triggers = ["HEAVY_RAIN", "TRAFFIC_DISRUPTION"]
+    prob = predict_disruption_probability(zone, base_triggers)
+    
     hours_lost = risk["expected_hours_lost"]
     
     # Formulation: income * prob * (hours_lost / working_hours)

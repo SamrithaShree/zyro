@@ -6,6 +6,8 @@ from typing import Dict, Any
 workers: Dict[str, Any] = {}
 policies: Dict[str, Any] = {}
 sessions: Dict[str, Any] = {}
+events: Dict[str, Any] = {}
+claims: Dict[str, Any] = {}
 otps: Dict[str, str] = {}  # phone -> otp_code (mock)
 
 # Secondary index for phone lookups

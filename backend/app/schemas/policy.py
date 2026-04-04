@@ -29,6 +29,12 @@ class PolicyRecommendationResponse(BaseModel):
     recommended_tier: str
     estimated_weekly_loss: int
     plans: List[PlanOption]
+    
+    # ML Insights
+    risk_score: float
+    risk_label: str
+    risk_reasoning: str
+    disruption_probability: float
 
 class PolicyActivationRequest(BaseModel):
     tier: str # Basic, Standard, Premium

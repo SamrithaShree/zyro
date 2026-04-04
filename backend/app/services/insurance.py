@@ -4,6 +4,8 @@ from typing import Optional, List, Dict, Any
 from app.db import session as db
 from app.models.domain import Worker, Policy
 from app.core.pricing_logic import get_plan_options, INCOME_BAND_TO_VALUE
+from app.services.ml.risk_model import compute_risk_score
+from app.services.ml.disruption_model import predict_disruption_probability
 
 def register_worker(
     phone: str, 
@@ -45,6 +47,14 @@ def get_worker_by_id(worker_id: str) -> Optional[Worker]:
         return db.workers.get(worker_id)
 
 def get_policy_recommendations(worker: Worker) -> Dict[str, Any]:
+    # 1. Compute ML Insights
+    risk_score, risk_label, risk_reasoning = compute_risk_score(worker.dict(), worker.zone)
+    
+    # Base triggers for probability estimation
+    base_triggers = ["HEAVY_RAIN", "TRAFFIC_DISRUPTION", "PLATFORM_DOWNTIME"]
+    disruption_prob = predict_disruption_probability(worker.zone, base_triggers)
+    
+    # 2. Get Plan Options
     plans = get_plan_options(
         worker.income_band, 
         worker.zone, 
@@ -52,14 +62,24 @@ def get_policy_recommendations(worker: Worker) -> Dict[str, Any]:
         worker.days_worked_per_week
     )
     
-    # Simple recommendation logic: prefer Standard
-    recommended_tier = "Standard"
-    estimated_weekly_loss = plans[0]["expected_weekly_loss"] # Same for all tiers
+    # 3. Smart Recommendation Logic
+    if risk_label == "HIGH":
+        recommended_tier = "Premium"
+    elif risk_label == "MEDIUM":
+        recommended_tier = "Standard"
+    else:
+        recommended_tier = "Basic"
+        
+    estimated_weekly_loss = plans[0]["expected_weekly_loss"]
     
     return {
         "recommended_tier": recommended_tier,
         "estimated_weekly_loss": estimated_weekly_loss,
-        "plans": plans
+        "plans": plans,
+        "risk_score": risk_score,
+        "risk_label": risk_label,
+        "risk_reasoning": risk_reasoning,
+        "disruption_probability": disruption_prob
     }
 
 def activate_policy(worker: Worker, tier: str) -> Policy:
