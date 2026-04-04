@@ -98,6 +98,20 @@ export const apiService = {
     logout: () => api.post<GenericResponse>("/auth/logout"),
   },
   
+  claims: {
+    getMyClaims: () =>
+      api.get<GenericResponse<any[]>>("/claims/me"),
+    
+    getClaim: (id: string) =>
+      api.get<GenericResponse<any>>(`/claims/${id}`),
+    
+    approve: (id: string) =>
+      api.post<GenericResponse>(`/claims/${id}/approve`),
+    
+    payout: (id: string) =>
+      api.post<GenericResponse>(`/claims/${id}/payout`),
+  },
+
   worker: {
     getMe: () =>
       api.get<GenericResponse>("/workers/me"),
