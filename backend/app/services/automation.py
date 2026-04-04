@@ -7,7 +7,6 @@ from app.models.domain import (
     Event, EventStatus, Claim, ClaimStatus, TriggerType, Worker, Policy,
     ValidationBreakdown, ImpactReasoning
 )
-from app.core.config import settings
 from app.services.ml.trust_model import compute_trust_multiplier
 from app.services.ml.risk_model import compute_risk_score
 
