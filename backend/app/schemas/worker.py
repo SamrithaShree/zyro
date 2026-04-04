@@ -27,6 +27,8 @@ class WorkerInfo(BaseModel):
     zone: str
     city: str
     income_band: str
+    working_hours_per_day: int
+    days_worked_per_week: int
     upi_id: str
     masked_aadhaar: str
     trust_score: float

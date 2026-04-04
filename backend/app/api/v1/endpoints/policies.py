@@ -1,5 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.policy import PolicyQuoteRequest, PolicyQuote, PolicyActivationResponse, AcknowledgementRequest
+from app.schemas.policy import (
+    PolicyQuoteRequest, 
+    PolicyRecommendationResponse, 
+    PolicyActivationRequest, 
+    PolicyActivationResponse, 
+    AcknowledgementRequest,
+    DashboardPolicyStatus,
+    PlanOption
+)
 from app.schemas.generic import GenericResponse
 from app.services import insurance as ins
 from app.core.onboarding import validate_and_transition, OnboardingState
@@ -9,11 +17,21 @@ from app.db import session as db
 router = APIRouter()
 
 @router.post("/quote", response_model=GenericResponse)
-async def quote(request: PolicyQuoteRequest, session = Depends(get_current_session)):
-    quote_data = ins.get_policy_quote(request.zone, request.income_band)
+async def quote(session = Depends(get_current_session)):
+    # In Phase 2, we quote based on the worker's registered profile
+    if not session.worker_id:
+        # Fallback for pre-registration quote if needed, but primary path is post-onboarding
+        raise HTTPException(status_code=400, detail="Worker must be registered to get a personalized quote")
+        
+    worker = ins.get_worker_by_id(session.worker_id)
+    if not worker:
+        raise HTTPException(status_code=404, detail="Worker profile not found")
+        
+    recommendations = ins.get_policy_recommendations(worker)
+    
     return GenericResponse(
-        message="Quote generated successfully",
-        data=PolicyQuote(**quote_data)
+        message="Personalized plans generated based on your earning intent",
+        data=PolicyRecommendationResponse(**recommendations)
     )
 
 @router.post("/acknowledge", response_model=GenericResponse)
@@ -29,7 +47,7 @@ async def acknowledge(request: AcknowledgementRequest, session = Depends(get_cur
     return GenericResponse(message="Insurance terms acknowledged")
 
 @router.post("/activate", response_model=GenericResponse)
-async def activate(session = Depends(get_current_session)):
+async def activate(request: PolicyActivationRequest, session = Depends(get_current_session)):
     if not session.worker_id:
         raise HTTPException(status_code=400, detail="Worker not registered")
     
@@ -37,33 +55,62 @@ async def activate(session = Depends(get_current_session)):
         raise HTTPException(status_code=400, detail="Onboarding not complete or insurance not acknowledged")
         
     # Idempotency check: look for existing active policy for this worker
-    with db.db_lock:
-        existing_policy = next((p for p in db.policies.values() if p.worker_id == session.worker_id and p.status == "ACTIVE"), None)
-        if existing_policy:
-            return GenericResponse(
-                message="Active policy already exists",
-                data=PolicyActivationResponse(
-                    policy_id=existing_policy.policy_id,
-                    status=existing_policy.status,
-                    valid_until=existing_policy.valid_until.isoformat()
-                )
+    existing_policy = ins.get_active_policy(session.worker_id)
+    if existing_policy:
+        return GenericResponse(
+            message="Active policy already exists",
+            data=PolicyActivationResponse(
+                policy_id=existing_policy.policy_id,
+                status=existing_policy.status,
+                valid_until=existing_policy.valid_until.isoformat(),
+                tier=existing_policy.tier,
+                premium_amount=existing_policy.premium_amount,
+                hourly_benefit=existing_policy.hourly_benefit,
+                weekly_cap=existing_policy.weekly_cap
             )
+        )
 
     worker = ins.get_worker_by_id(session.worker_id)
-    if not worker:
-        raise HTTPException(status_code=404, detail="Worker profile not found")
-        
-    policy = ins.activate_policy(
-        worker_id=worker.worker_id,
-        zone=worker.zone,
-        income_band=worker.income_band
-    )
+    policy = ins.activate_policy(worker, request.tier)
     
     return GenericResponse(
-        message="Policy activated successfully",
+        message=f"{policy.tier} Protection Activated Successfully",
         data=PolicyActivationResponse(
             policy_id=policy.policy_id,
             status=policy.status,
-            valid_until=policy.valid_until.isoformat()
+            valid_until=policy.valid_until.isoformat(),
+            tier=policy.tier,
+            premium_amount=policy.premium_amount,
+            hourly_benefit=policy.hourly_benefit,
+            weekly_cap=policy.weekly_cap
         )
     )
+
+@router.get("/status", response_model=GenericResponse)
+async def get_policy_status(session = Depends(get_current_session)):
+    if not session.worker_id:
+        return GenericResponse(message="No worker profile", data=DashboardPolicyStatus(has_active_policy=False))
+        
+    policy = ins.get_active_policy(session.worker_id)
+    if not policy:
+        return GenericResponse(message="No active policy", data=DashboardPolicyStatus(has_active_policy=False))
+        
+    status = DashboardPolicyStatus(
+        has_active_policy=True,
+        policy_details=PlanOption(
+            tier=policy.tier,
+            premium_amount=policy.premium_amount,
+            hourly_benefit=policy.hourly_benefit,
+            weekly_cap=policy.weekly_cap,
+            covered_triggers=policy.covered_triggers,
+            replacement_fraction=policy.replacement_fraction,
+            expected_weekly_loss=policy.expected_weekly_loss,
+            intended_protection_level=f"{int(policy.replacement_fraction * 100)}%",
+            pricing_drivers=[], # Snapshot not stored yet
+            explanation=policy.recommendation_explanation
+        ),
+        remaining_cap=policy.remaining_cap,
+        coverage_window=f"{policy.valid_from.strftime('%b %d')} - {policy.valid_until.strftime('%b %d')}"
+    )
+    
+    return GenericResponse(message="Active policy status retrieved", data=status)

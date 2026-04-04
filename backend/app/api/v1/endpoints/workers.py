@@ -30,12 +30,14 @@ async def capture_location(request: LocationRequest, session = Depends(get_curre
 async def work_profile(request: WorkProfileRequest, session = Depends(get_current_session)):
     validate_and_transition(session, "save_work_profile")
     # Validate income band against pricing logic
-    from app.core.pricing_logic import INCOME_BAND_TO_HOURLY_BENEFIT
-    if request.income_band not in INCOME_BAND_TO_HOURLY_BENEFIT:
+    from app.core.pricing_logic import INCOME_BAND_TO_VALUE
+    if request.income_band not in INCOME_BAND_TO_VALUE:
         raise HTTPException(status_code=400, detail="Invalid income band")
     
     session.temp_platform = request.platform
     session.temp_income_band = request.income_band
+    session.temp_working_hours_per_day = request.working_hours_per_day
+    session.temp_days_worked_per_week = request.days_worked_per_week
     session.work_profile_completed = True
     return GenericResponse(message="Work profile saved")
 
@@ -61,12 +63,21 @@ async def register(request: WorkerRegister, session = Depends(get_current_sessio
                     zone=worker.zone,
                     city=worker.city,
                     income_band=worker.income_band,
+                    working_hours_per_day=worker.working_hours_per_day,
+                    days_worked_per_week=worker.days_worked_per_week,
                     upi_id=worker.upi_id,
                     masked_aadhaar=worker.masked_aadhaar,
                     trust_score=worker.trust_score,
                     worker_badge=worker.worker_badge
                 )
             )
+
+    # Guard: Ensure work profile details are present in session
+    if not session.temp_working_hours_per_day or not session.temp_days_worked_per_week:
+        raise HTTPException(
+            status_code=400, 
+            detail="Incomplete work profile: missing working hours per day or days worked per week."
+        )
 
     validate_and_transition(session, "register_worker")
         
@@ -76,6 +87,8 @@ async def register(request: WorkerRegister, session = Depends(get_current_sessio
         zone=session.temp_location["zone"],
         city=session.temp_location["city"],
         income_band=session.temp_income_band,
+        working_hours_per_day=session.temp_working_hours_per_day,
+        days_worked_per_week=session.temp_days_worked_per_week,
         upi_id=session.temp_upi_id,
         masked_aadhaar=session.temp_masked_aadhaar
     )
@@ -92,6 +105,8 @@ async def register(request: WorkerRegister, session = Depends(get_current_sessio
             zone=worker.zone,
             city=worker.city,
             income_band=worker.income_band,
+            working_hours_per_day=worker.working_hours_per_day,
+            days_worked_per_week=worker.days_worked_per_week,
             upi_id=worker.upi_id,
             masked_aadhaar=worker.masked_aadhaar,
             trust_score=worker.trust_score,

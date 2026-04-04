@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from datetime import datetime
 import uuid
 
@@ -10,6 +10,8 @@ class Worker(BaseModel):
     zone: Optional[str] = None
     city: Optional[str] = "Chennai"
     income_band: Optional[str] = None
+    working_hours_per_day: int = 8
+    days_worked_per_week: int = 6
     upi_id: Optional[str] = None
     masked_aadhaar: Optional[str] = None
     trust_score: float = 85.0
@@ -20,10 +22,22 @@ class Worker(BaseModel):
 class Policy(BaseModel):
     policy_id: str
     worker_id: str
+    tier: str # Basic, Standard, Premium
     premium_amount: int
     hourly_benefit: int
     weekly_cap: int
+    remaining_cap: int
+    replacement_fraction: float
+    expected_weekly_loss: int
+    covered_triggers: List[str]
+    recommendation_explanation: str
+    
+    # Contract Snapshots (Immutable for the week)
+    income_estimate_snapshot: int
+    working_hours_snapshot: int
+    
     status: str = "ACTIVE"  # ACTIVE, EXPIRED
+    valid_from: datetime = Field(default_factory=datetime.utcnow)
     valid_until: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -55,6 +69,8 @@ class Session(BaseModel):
     temp_platform: Optional[str] = None
     temp_zone: Optional[str] = None
     temp_income_band: Optional[str] = None
+    temp_working_hours_per_day: int = 8
+    temp_days_worked_per_week: int = 6
     temp_masked_aadhaar: Optional[str] = None
     temp_upi_id: Optional[str] = None
     temp_location: Optional[dict] = None
