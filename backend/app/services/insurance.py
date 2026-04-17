@@ -48,7 +48,7 @@ def get_worker_by_id(worker_id: str) -> Optional[Worker]:
 
 def get_policy_recommendations(worker: Worker) -> Dict[str, Any]:
     # 1. Compute ML Insights
-    risk_score, risk_label, risk_reasoning = compute_risk_score(worker.dict(), worker.zone)
+    risk_score, risk_label, base_reason, factors = compute_risk_score(worker.dict(), worker.zone)
     
     # Base triggers for probability estimation
     base_triggers = ["HEAVY_RAIN", "TRAFFIC_DISRUPTION", "PLATFORM_DOWNTIME"]
@@ -78,7 +78,10 @@ def get_policy_recommendations(worker: Worker) -> Dict[str, Any]:
         "plans": plans,
         "risk_score": risk_score,
         "risk_label": risk_label,
-        "risk_reasoning": risk_reasoning,
+        "explanation": {
+            "plain_text": base_reason,
+            "primary_factors": factors
+        },
         "disruption_probability": disruption_prob
     }
 

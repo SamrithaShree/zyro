@@ -13,6 +13,15 @@ class PolicyQuoteRequest(BaseModel):
     zone: Optional[str] = None
     income_band: Optional[str] = None
 
+class PrimaryFactor(BaseModel):
+    feature: str
+    shap_value: float
+    interpretation: str
+
+class MLInsightExplanation(BaseModel):
+    plain_text: str
+    primary_factors: List[PrimaryFactor]
+
 class PlanOption(BaseModel):
     tier: str
     premium_amount: int
@@ -33,7 +42,7 @@ class PolicyRecommendationResponse(BaseModel):
     # ML Insights
     risk_score: float
     risk_label: str
-    risk_reasoning: str
+    explanation: MLInsightExplanation
     disruption_probability: float
 
 class PolicyActivationRequest(BaseModel):

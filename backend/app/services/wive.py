@@ -143,17 +143,22 @@ class WIVE:
         breakdown.working_hours_overlap = final_impact > 0
 
         # ── Check 4: Earning intent (ML, fallback-safe) ───────────────────────
+        # classify_activity returns: active_delivery | waiting | stationary | uncertain
+        # "uncertain" means ML couldn't decide — we treat this as PASS (benefit of doubt)
+        # Only "stationary" is a hard rejection signal
         try:
-            intent = has_earning_intent(sensor_payload=None)  # Demo: generate payload
+            from app.services.ml.activity_classifier import classify_activity
+            activity_label = classify_activity(sensor_payload=None)
         except Exception as exc:
-            logger.warning("WIVE earning_intent ML failed: %s — defaulting True", exc)
-            intent = True
+            logger.warning("WIVE earning_intent ML failed: %s — defaulting active", exc)
+            activity_label = "active_delivery"
 
+        intent = activity_label != "stationary"
         breakdown.earning_intent_detected = intent
 
         if not intent:
-            rejection_reason = "Earning intent could not be confirmed during the event window."
-            logger.debug("WIVE earning_intent FAIL worker=%s", worker.worker_id)
+            rejection_reason = "Earning intent not detected: worker classified as stationary during event window."
+            logger.debug("WIVE earning_intent FAIL (stationary) worker=%s", worker.worker_id)
             return WIVEResult(
                 eligible=False,
                 breakdown=breakdown,

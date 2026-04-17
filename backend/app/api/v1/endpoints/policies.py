@@ -8,7 +8,7 @@ from app.schemas.policy import (
     DashboardPolicyStatus,
     PlanOption
 )
-from app.schemas.generic import GenericResponse
+from app.schemas.generic import GenericResponse, GlobalResponse, success
 from app.services import insurance as ins
 from app.core.onboarding import validate_and_transition, OnboardingState
 from .workers import get_current_session
@@ -16,7 +16,7 @@ from app.db import session as db
 
 router = APIRouter()
 
-@router.post("/quote", response_model=GenericResponse)
+@router.post("/quote", response_model=GlobalResponse)
 async def quote(session = Depends(get_current_session)):
     # In Phase 2, we quote based on the worker's registered profile
     if not session.worker_id:
@@ -29,9 +29,9 @@ async def quote(session = Depends(get_current_session)):
         
     recommendations = ins.get_policy_recommendations(worker)
     
-    return GenericResponse(
+    return success(
         message="Personalized plans generated based on your earning intent",
-        data=PolicyRecommendationResponse(**recommendations)
+        data=PolicyRecommendationResponse(**recommendations).model_dump()
     )
 
 @router.post("/acknowledge", response_model=GenericResponse)

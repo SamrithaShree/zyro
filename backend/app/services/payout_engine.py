@@ -70,7 +70,7 @@ class PayoutEngine:
         Raises:
             ValueError — if claim not found, not eligible, or policy cap exhausted
         """
-        # ── 1. Load and validate claim ────────────────────────────────────────
+        # ── 1. Load claim ─────────────────────────────────────────────────────
         with session.db_lock:
             claim_data = session.claims.get(claim_id)
 
@@ -79,27 +79,16 @@ class PayoutEngine:
 
         claim: Claim = claim_data if isinstance(claim_data, Claim) else Claim(**claim_data)
 
-        if claim.status not in (ClaimStatus.ELIGIBLE, ClaimStatus.PAYOUT_READY):
-            raise ValueError(
-                f"Claim {claim_id} is not eligible for payout (status={claim.status.value})."
-            )
-
-        if claim.final_payout <= 0:
-            raise ValueError(
-                f"Claim {claim_id} has zero payout amount — cannot process."
-            )
-
-        # ── 2. Idempotency check ──────────────────────────────────────────────
+        # ── 2. Idempotency check (BEFORE status check) ────────────────────────
         week_id = PayoutEngine._get_week_id()
-        idempotency_key = f"{claim.worker_id}:{claim.event_id}:{week_id}"
+        idempotency_key = f"payout_{claim.worker_id}_{claim.event_id}_{week_id}"
+        worker_upi: Optional[str] = PayoutEngine._get_worker_upi(claim.worker_id)
 
         if session.is_payout_done(idempotency_key):
             logger.info(
                 "PayoutEngine: idempotency hit for key=%s claim=%s — skipping duplicate",
                 idempotency_key, claim_id,
             )
-            # Return the already-paid transaction details
-            worker_upi = PayoutEngine._get_worker_upi(claim.worker_id)
             return PayoutTransaction(
                 transaction_id=f"txn_dup_{uuid.uuid4().hex[:8]}",
                 claim_id=claim_id,
@@ -110,6 +99,18 @@ class PayoutEngine:
                 processed_at=claim.processed_at.isoformat() + "Z" if claim.processed_at else datetime.utcnow().isoformat() + "Z",
                 already_processed=True,
             )
+
+        # ── 3. Validate claim status ──────────────────────────────────────────
+        if claim.status not in (ClaimStatus.ELIGIBLE, ClaimStatus.PAYOUT_READY):
+            raise ValueError(
+                f"Claim {claim_id} is not eligible for payout (status={claim.status.value})."
+            )
+
+        if claim.final_payout <= 0:
+            raise ValueError(
+                f"Claim {claim_id} has zero payout amount — cannot process."
+            )
+
 
         # ── 3. Policy cap check + atomic state update ─────────────────────────
         transaction_id = f"txn_{uuid.uuid4().hex[:12]}"
@@ -240,9 +241,9 @@ class PayoutEngine:
 
     @staticmethod
     def _get_week_id() -> str:
-        """Return ISO week identifier string: YYYY-Www (e.g. 2026-W16)."""
+        """Return YYYYWW week identifier string (e.g. 202616 for week 16 of 2026)."""
         now = datetime.utcnow()
-        return now.strftime("%G-W%V")
+        return now.strftime("%Y%W")
 
     @staticmethod
     def _get_worker_upi(worker_id: str) -> Optional[str]:

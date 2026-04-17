@@ -44,9 +44,12 @@ SEVERITY_FACTOR_MAX: float = 1.5
 TRUST_MULTIPLIER_MIN: float = 0.85
 TRUST_MULTIPLIER_MAX: float = 1.2
 
-# ── Confidence lane thresholds ────────────────────────────────────────────────
-HIGH_CONFIDENCE_THRESHOLD: float = 0.75
-MEDIUM_CONFIDENCE_THRESHOLD: float = 0.45
+# ── Confidence lane thresholds (derived from anomaly_score spec) ─────────────
+# Spec: anomaly_score < 0.30 → HIGH  (confidence_score > 0.70)
+#       anomaly_score < 0.70 → MEDIUM (confidence_score > 0.30)
+#       anomaly_score ≥ 0.70 → REVIEW (confidence_score ≤ 0.30)
+HIGH_CONFIDENCE_THRESHOLD: float = 0.70     # anomaly_score < 0.30
+MEDIUM_CONFIDENCE_THRESHOLD: float = 0.30   # anomaly_score < 0.70
 
 
 class ClaimGenerator:
@@ -283,14 +286,14 @@ class ClaimGenerator:
     @staticmethod
     def _route_confidence(confidence_score: float) -> str:
         """
-        Confidence lane routing:
-            ≥ 0.75  → HIGH   (auto-payout)
-            0.45–0.74 → MEDIUM (deferred batch)
-            < 0.45  → REVIEW (manual queue)
+        Confidence lane routing (spec-aligned via anomaly_score):
+            anomaly_score < 0.30  (confidence > 0.70)  → HIGH   (auto-payout immediately)
+            anomaly_score < 0.70  (confidence > 0.30)  → MEDIUM (deferred 2-4h batch)
+            anomaly_score ≥ 0.70  (confidence ≤ 0.30)  → REVIEW (manual 24h queue)
         """
-        if confidence_score >= HIGH_CONFIDENCE_THRESHOLD:
+        if confidence_score > HIGH_CONFIDENCE_THRESHOLD:
             return "HIGH"
-        elif confidence_score >= MEDIUM_CONFIDENCE_THRESHOLD:
+        elif confidence_score > MEDIUM_CONFIDENCE_THRESHOLD:
             return "MEDIUM"
         else:
             return "REVIEW"

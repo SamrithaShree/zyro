@@ -31,7 +31,7 @@ def compute_risk_score(worker_profile: dict, zone: str) -> Tuple[float, str, str
     hours = int(worker_profile.get("working_hours_per_day", 8))
     
     income_band_val = 3
-    income_band_str = worker_profile.get("income_band", "₹15k - ₹25k")
+    income_band_str = worker_profile.get("income_band") or "₹15k - ₹25k"
     if "15k" in income_band_str: income_band_val = 2
     elif "25k" in income_band_str: income_band_val = 3
     elif "35k" in income_band_str: income_band_val = 4
@@ -66,11 +66,17 @@ def compute_risk_score(worker_profile: dict, zone: str) -> Tuple[float, str, str
         else:
             label = "HIGH"
             base_reason = "High risk detected."
-            
-        reasoning = f"{base_reason} (ML Logic: The primary factor driving this assessment is your {key_feature}. SHAP Impact: {shap_values[key_feature_idx]:.2f})"
-        
-        return round(final_score, 2), label, reasoning
+
+        factors = []
+        for idx, name in enumerate(feature_names):
+            factors.append({
+                "feature": name,
+                "shap_value": float(shap_values[idx]),
+                "interpretation": f"{'+' if shap_values[idx] > 0 else ''}{'Increases' if shap_values[idx] > 0 else 'Decreases'} risk by {abs(shap_values[idx]):.2f}"
+            })
+
+        return round(final_score, 2), label, base_reason, factors
     else:
         # Fallback if model not found
         final_score = zone_risk
-        return final_score, "UNKNOWN", "Fallback rule applied."
+        return final_score, "UNKNOWN", "Fallback rule applied.", []

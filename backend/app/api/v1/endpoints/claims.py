@@ -96,7 +96,7 @@ async def get_my_claims(
 
     return success(
         message=f"Found {len(claim_items)} claim(s) for worker.",
-        data={"claims": claim_items, "total": len(claim_items)},
+        data=claim_items,
     )
 
 
