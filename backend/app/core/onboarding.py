@@ -70,9 +70,16 @@ def is_transition_valid(current_state: OnboardingState, action: str) -> bool:
     if action == "send_aadhaar_otp" and current_state == OnboardingState.AADHAAR_OTP_SENT:
         return True
 
-    # Strict check: Target must be the immediate next step in the sequence
-    expected_next = get_next_state(current_state)
-    return target_state == expected_next
+    # Get indices for comparison
+    try:
+        current_idx = STATE_ORDER.index(current_state)
+        target_idx = STATE_ORDER.index(target_state)
+        
+        # Allow any forward jump in the sequence for the hackathon demo.
+        # This makes it resilient to serverless instances losing intermediate state.
+        return target_idx > current_idx
+    except ValueError:
+        return False
 
 def validate_and_transition(session, action: str):
     from fastapi import HTTPException

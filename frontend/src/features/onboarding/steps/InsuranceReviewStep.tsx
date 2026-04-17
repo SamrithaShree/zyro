@@ -80,17 +80,23 @@ export function InsuranceReviewStep() {
       // 2. Activate with SELECTED tier
       await apiService.policy.activate({ tier: selectedTier });
       
-      await syncWithBackend();
+      // 3. Mark complete and navigate IMMEDIATELY — do NOT await syncWithBackend
+      // before this, as it can overwrite onboardingComplete=true with a stale
+      // backend response and send the user back to /login.
       complete();
       toast.success(`${selectedTier} Protection Activated!`);
       navigate("/dashboard");
+      
+      // Sync in the background after navigation (best-effort)
+      syncWithBackend().catch(() => {});
     } catch (err: any) {
-      // If we hit a transition error but the backend says we're actually ready/protected,
-      // just recover and go to dashboard
+      // If we hit a transition error but the backend says we're actually ready,
+      // mark complete and go to dashboard anyway.
       const msg = err.response?.data?.detail?.message || err.response?.data?.message || "";
       if (msg.includes("Invalid onboarding transition") || msg.includes("already exists")) {
-        await syncWithBackend();
+        complete();
         navigate("/dashboard");
+        syncWithBackend().catch(() => {});
         return;
       }
       toast.error(err.response?.data?.message || "Activation failed");

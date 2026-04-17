@@ -9,3 +9,5 @@ __pycache__/
 docs/
 GEMINI.md
 conductor/
+.vercel
+.env*.local

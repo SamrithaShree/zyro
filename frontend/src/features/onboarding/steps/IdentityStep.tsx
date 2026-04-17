@@ -88,7 +88,11 @@ export function IdentityStep() {
       </div>
 
       <StickyCTA>
-        <Button onClick={nextStep} disabled={!data.name}>
+        <Button onClick={async () => {
+          // Sync with backend to keep session warm
+          await useOnboardingStore.getState().syncWithBackend();
+          nextStep();
+        }} disabled={!data.name}>
           Continue
         </Button>
       </StickyCTA>

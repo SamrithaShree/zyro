@@ -5,6 +5,7 @@ import { BottomNav } from "../components/BottomNav";
 import { Shield, ChevronRight, TrendingUp, AlertCircle, Activity as ActivityIcon, Loader2 } from "lucide-react";
 import { apiService } from "../../services/api";
 import { motion } from "motion/react";
+import { StatsStrip } from "../components/StatsStrip";
 import "../../design-system/styles/atmosphere.css";
 
 export function Activity() {
@@ -27,6 +28,13 @@ export function Activity() {
 
   useEffect(() => { load(); }, []);
 
+  // Calculate stats
+  const totalClaimed = claims.filter(c => c.status === 'PAID').reduce((sum, c) => sum + (c.final_payout || 0), 0);
+  const potentialLoss = claims.reduce((sum, c) => sum + (c.estimated_loss || 0), 0);
+  const stabilityBase = 85; 
+  const stabilityBonus = Math.min(10, claims.length * 2);
+  const netStability = stabilityBase + stabilityBonus;
+
   return (
     <div className="zyro-root font-sans">
       <div className="zyro-atmosphere" />
@@ -42,6 +50,12 @@ export function Activity() {
                <TrendingUp className="w-6 h-6" />
             </div>
           </div>
+
+          <StatsStrip 
+            totalClaimed={totalClaimed}
+            potentialLoss={potentialLoss}
+            netGain={netStability}
+          />
 
           {loading ? (
             <div className="space-y-4">

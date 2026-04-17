@@ -19,13 +19,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle errors and extract data from GenericResponse
+// Response interceptor — handle errors globally
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const { response } = error;
+    const { response, config } = error;
 
-    if (response?.status === 401) {
+    // Only force-logout on 401 for core auth endpoints.
+    // A 401 on /workers/register or /policies/status must NOT wipe
+    // the session — it would log the user out right after onboarding.
+    const authOnlyPaths = ["/auth/onboarding-status", "/auth/login-mpin"];
+    const isAuthEndpoint = authOnlyPaths.some((p) => config?.url?.includes(p));
+
+    if (response?.status === 401 && isAuthEndpoint) {
       useAuthStore.getState().logout();
       if (!window.location.pathname.includes("/login")) {
         window.location.href = "/login";
@@ -36,13 +42,19 @@ api.interceptors.response.use(
     const detail = response?.data?.detail;
     const message = typeof detail === 'string' ? detail : (detail?.message || response?.data?.message || "Something went wrong.");
     
-    // Handle invalid transition by syncing store
-    if (message === "Invalid onboarding transition" || (typeof detail === 'object' && detail?.message === "Invalid onboarding transition")) {
+    // Handle invalid transition by syncing store (best-effort, non-blocking)
+    if (
+      message === "Invalid onboarding transition" ||
+      (typeof detail === 'object' && detail?.message === "Invalid onboarding transition")
+    ) {
       const { useOnboardingStore } = await import("../store/useOnboardingStore");
-      useOnboardingStore.getState().syncWithBackend();
+      useOnboardingStore.getState().syncWithBackend().catch(() => {});
     }
 
-    if (response?.status !== 422) {
+    // Suppress noisy toasts for background dashboard/activity calls
+    const silentPaths = ["/workers/me", "/policies/status", "/claims/me", "/events/active"];
+    const isSilent = silentPaths.some((p) => config?.url?.includes(p));
+    if (response?.status !== 422 && !isSilent) {
       toast.error(message);
     }
 
@@ -97,7 +109,7 @@ export const apiService = {
   
   worker: {
     getMe: () =>
-      api.post<GenericResponse>("/workers/register", { confirm: true }), // Using register as idempotent me
+      api.get<GenericResponse>("/workers/me"),
     
     captureLocation: (payload: { lat?: number; lng?: number; city?: string; zone?: string }) =>
       api.post<GenericResponse>("/workers/location", payload),

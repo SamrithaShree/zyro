@@ -231,7 +231,11 @@ export function PlatformStep() {
       </AnimatePresence>
 
       <StickyCTA>
-        <Button onClick={nextStep} disabled={!isComplete}>
+        <Button onClick={async () => {
+          // Sync with backend to keep session warm
+          await useOnboardingStore.getState().syncWithBackend();
+          nextStep();
+        }} disabled={!isComplete}>
           Continue
         </Button>
       </StickyCTA>

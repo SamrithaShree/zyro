@@ -184,9 +184,9 @@ export function Profile() {
                     <Shield className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="font-black text-[#1B4965] text-sm italic tracking-tight">Platforms</div>
+                    <div className="font-black text-[#1B4965] text-sm italic tracking-tight">Platform Details</div>
                     <div className="text-[10px] font-bold text-[#1B4965]/40 uppercase tracking-tighter mt-0.5">
-                      {data.platform || "Swiggy, Zomato"}
+                      {data.platform || "Platform"} • ID: {data.workerId || "NOT_LINKED"}
                     </div>
                   </div>
                 </div>

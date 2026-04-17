@@ -19,6 +19,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { apiService } from "../../services/api";
 import { Button } from "../../design-system/components/Button";
 import { BottomNav } from "../components/BottomNav";
+import { StatsStrip } from "../components/StatsStrip";
 import "../../design-system/styles/atmosphere.css";
 
 export function Dashboard() {
@@ -31,26 +32,29 @@ export function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [profRes, policyRes, claimsRes] = await Promise.all([
+      // Fire all calls independently — one failure must not crash the dashboard
+      const [profRes, policyRes, claimsRes] = await Promise.allSettled([
         apiService.worker.getMe(),
         apiService.policy.getStatus(),
-        apiService.claims.getMyClaims()
+        apiService.claims.getMyClaims(),
       ]);
-      
-      if (profRes.data.status === "SUCCESS") {
-        setProfile(profRes.data.data);
+
+      if (profRes.status === "fulfilled" && profRes.value.data.status === "SUCCESS") {
+        setProfile(profRes.value.data.data);
       } else {
         setProfile({ phone, zone: "Anna Nagar", city: "Chennai" });
       }
 
-      if (policyRes.data?.data) {
-        setPolicyStatus(policyRes.data.data);
-      } else if (policyRes.data) {
-        setPolicyStatus(policyRes.data);
+      if (policyRes.status === "fulfilled") {
+        if (policyRes.value.data?.data) {
+          setPolicyStatus(policyRes.value.data.data);
+        } else if (policyRes.value.data) {
+          setPolicyStatus(policyRes.value.data);
+        }
       }
 
-      if (Array.isArray(claimsRes.data)) {
-        setClaims(claimsRes.data);
+      if (claimsRes.status === "fulfilled" && Array.isArray(claimsRes.value.data)) {
+        setClaims(claimsRes.value.data);
       }
     } catch (err) {
       console.error("Dashboard fetch failed", err);
@@ -82,6 +86,13 @@ export function Dashboard() {
 
   const hasPolicy = policyStatus?.has_active_policy;
   const policy = policyStatus?.policy_details;
+
+  // Calculate stats
+  const totalClaimed = claims.filter(c => c.status === 'PAID').reduce((sum, c) => sum + (c.final_payout || 0), 0);
+  const potentialLoss = claims.reduce((sum, c) => sum + (c.estimated_loss || 0), 0);
+  const stabilityBase = 85; 
+  const stabilityBonus = Math.min(10, claims.length * 2);
+  const netStability = stabilityBase + stabilityBonus;
 
   return (
     <div className="zyro-root font-sans">
@@ -127,6 +138,13 @@ export function Dashboard() {
         </header>
 
         <main className="px-6 space-y-8 relative z-10">
+          
+          {/* Financial Stats Strip */}
+          <StatsStrip 
+            totalClaimed={totalClaimed}
+            potentialLoss={potentialLoss}
+            netGain={netStability}
+          />
           
           {/* Policy Hero Card */}
           {hasPolicy ? (

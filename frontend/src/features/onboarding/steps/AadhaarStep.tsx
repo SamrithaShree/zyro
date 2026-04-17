@@ -40,6 +40,10 @@ export function AadhaarStep() {
     try {
       await apiService.auth.verifyAadhaarOtp(otp);
       updateData({ aadhaarNumber: aadhaar });
+      
+      // Explicitly sync with backend to move onboarding state forward before next step
+      await useOnboardingStore.getState().syncWithBackend();
+      
       setSubStep("success");
       toast.success("Aadhaar verified successfully");
     } catch (err: any) {
@@ -125,7 +129,8 @@ export function AadhaarStep() {
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Backspace" && !otp[i] && i > 0) {
-                        (e.target.previousElementSibling as HTMLInputElement)?.focus();
+                        const target = e.target as HTMLInputElement;
+                        (target.previousElementSibling as HTMLInputElement)?.focus();
                       }
                     }}
                     className={`

@@ -125,7 +125,7 @@ export const useOnboardingStore = create<OnboardingState>()(
           if (res.data.status === "SUCCESS") {
             const { onboarding_state, can_activate_policy } = res.data.data;
             const step = BACKEND_STATE_TO_STEP[onboarding_state] || 1;
-            
+
             if (step === 2 && get().currentStep === 3) {
               return;
             }
@@ -134,8 +134,15 @@ export const useOnboardingStore = create<OnboardingState>()(
               set({ isComplete: true, currentStep: 10 });
               useAuthStore.getState().setOnboardingComplete(true);
             } else {
-              set({ currentStep: step });
-              useAuthStore.getState().setOnboardingComplete(false);
+              // NEVER downgrade onboardingComplete once it's true.
+              // A stale/mid-propagation backend response must not kick
+              // an already-completed user back to /login.
+              const alreadyComplete = get().isComplete ||
+                useAuthStore.getState().onboardingComplete;
+              if (!alreadyComplete) {
+                set({ currentStep: step });
+                useAuthStore.getState().setOnboardingComplete(false);
+              }
             }
           }
         } catch (error) {
