@@ -18,6 +18,11 @@ export function ReviewStep() {
   }, []);
 
   const handleRegister = async () => {
+    if (useAuthStore.getState().isRegistered) {
+      await syncWithBackend();
+      return;
+    }
+    
     setLoading(true);
     try {
       const response = await apiService.worker.register();

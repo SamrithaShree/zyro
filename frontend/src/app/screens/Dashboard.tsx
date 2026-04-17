@@ -43,7 +43,9 @@ export function Dashboard() {
         setProfile({ phone, zone: "Anna Nagar", city: "Chennai" });
       }
 
-      if (policyRes.data) {
+      if (policyRes.data?.data) {
+        setPolicyStatus(policyRes.data.data);
+      } else if (policyRes.data) {
         setPolicyStatus(policyRes.data);
       }
 

@@ -81,9 +81,9 @@ const BACKEND_STATE_TO_STEP: Record<string, number> = {
   "WORK_PROFILE_COMPLETED": 8,
   "UPI_CONFIGURED": 9,
   "WORKER_REGISTERED": 10,
-  "MPIN_SET": 11,
-  "INSURANCE_ACKNOWLEDGED": 12,
-  "READY": 12
+  "MPIN_SET": 10,
+  "INSURANCE_ACKNOWLEDGED": 11,
+  "READY": 11
 };
 
 
@@ -130,8 +130,8 @@ export const useOnboardingStore = create<OnboardingState>()(
               return;
             }
 
-            if (step > 11 || can_activate_policy) {
-              set({ isComplete: true, currentStep: 11 });
+            if (step >= 11 || can_activate_policy) {
+              set({ isComplete: true, currentStep: 10 });
               useAuthStore.getState().setOnboardingComplete(true);
             } else {
               set({ currentStep: step });
