@@ -35,35 +35,28 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { name, phone } = useAuthStore();
 
-  const [profile, setProfile]       = useState<{ name?: string; zone?: string; city?: string; trust_score?: number } | null>(null);
   const [policy, setPolicy]         = useState<UIPolicy | null>(null);
   const [claims, setClaims]         = useState<UIClaim[]>([]);
   const [loading, setLoading]       = useState(true);
 
   // ── Fetch → Transform → Store ──────────────────────────────────────────────
   const fetchData = async () => {
-    const [profRes, policyRes, claimsRes] = await Promise.allSettled([
-      apiService.worker.getMe(),
+    const [policyRes, claimsRes] = await Promise.allSettled([
       apiService.policy.getStatus(),
       apiService.claims.getMyClaims(),
     ]);
 
-    // Profile
-    if (profRes.status === "fulfilled" && profRes.value.data?.status === "SUCCESS") {
-      setProfile(profRes.value.data.data ?? null);
-    } else if (profile === null) {
-      setProfile({ name: name ?? undefined, zone: "Anna Nagar", city: "Chennai" });
-    }
-
-    // Policy — adapter normalises both wrapped & flat shapes
+    // Policy — GET /policies/status returns GenericResponse {data: DashboardPolicyStatus}
     if (policyRes.status === "fulfilled") {
-      setPolicy(mapPolicyStatus(policyRes.value.data));
+      // Backend returns GenericResponse: res.data = { status, message, data: DashboardPolicyStatus }
+      const raw = policyRes.value.data?.data ?? policyRes.value.data ?? null;
+      setPolicy(mapPolicyStatus(raw));
     }
 
-    // Claims — adapter maps payout_amount → final_payout
+    // Claims — GET /claims/me returns List[ClaimResponse] DIRECTLY (no wrapper)
     if (claimsRes.status === "fulfilled") {
       const raw = claimsRes.value.data;
-      setClaims(mapClaims(Array.isArray(raw) ? raw : raw?.data ?? []));
+      setClaims(mapClaims(Array.isArray(raw) ? raw : []));
     }
   };
 
@@ -114,12 +107,12 @@ export function Dashboard() {
               </span>
             </div>
             <h1 className="text-[28px] font-black text-[#1B4965] tracking-tight">
-              Hey, {profile?.name?.split(' ')[0] || name || 'Partner'}
+              Hey, {name || 'Partner'}
             </h1>
             <div className="flex items-center gap-1.5 text-[#1B4965]/40">
               <MapPin className="w-3.5 h-3.5" />
               <span className="text-[12px] font-bold uppercase tracking-tighter">
-                {profile?.city || 'Chennai'} • {profile?.zone || 'Anna Nagar'}
+                Chennai • Anna Nagar
               </span>
             </div>
           </div>

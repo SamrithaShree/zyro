@@ -45,8 +45,11 @@ export function ClaimDetails() {
     if (!claimId) return;
     try {
       const res = await apiService.claims.getClaim(claimId);
-      const raw = res.data?.data ?? res.data;
-      if (raw) setClaim(mapClaimDetail(raw));
+      // GET /claims/{id} returns ClaimResponse DIRECTLY (no {status,data} wrapper)
+      const raw = res.data;
+      if (raw?.claim_id) {
+        setClaim(mapClaimDetail(raw));
+      }
     } catch (err) {
       console.error("Failed to fetch claim", err);
     } finally {

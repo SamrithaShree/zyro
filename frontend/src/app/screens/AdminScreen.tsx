@@ -54,8 +54,13 @@ export function AdminScreen() {
       apiService.claims.getMyClaims(),
     ]);
 
+    // GET /claims/summary → ClaimSummary DIRECTLY (no wrapper)
     const summaryRaw = summaryRes.status === "fulfilled" ? summaryRes.value.data : null;
+
+    // GET /events/active → ActiveEventsResponse { events: [...] } DIRECTLY
     const eventsRaw  = eventsRes.status  === "fulfilled" ? eventsRes.value.data  : null;
+
+    // GET /claims/me → List[ClaimResponse] DIRECTLY
     const claimsRaw  = claimsRes.status  === "fulfilled" ? claimsRes.value.data  : [];
 
     const summaryPart  = mapClaimsSummary(summaryRaw);

@@ -52,7 +52,7 @@ api.interceptors.response.use(
     }
 
     // Suppress noisy toasts for background dashboard/activity calls
-    const silentPaths = ["/workers/me", "/policies/status", "/claims/me", "/events/active"];
+    const silentPaths = ["/policies/status", "/claims/me", "/events/active", "/claims/summary"];
     const isSilent = silentPaths.some((p) => config?.url?.includes(p));
     if (response?.status !== 422 && !isSilent) {
       toast.error(message);
@@ -125,8 +125,8 @@ export const apiService = {
   },
 
   policy: {
-    getQuote: (zone?: string, income_band?: string) =>
-      api.post<GenericResponse>("/policies/quote", { zone, income_band }),
+    getQuote: () =>
+      api.post<GenericResponse>("/policies/quote"),
     
     acknowledge: (payload: any) =>
       api.post<GenericResponse>("/policies/acknowledge", payload),
