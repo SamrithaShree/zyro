@@ -147,6 +147,12 @@ export const apiService = {
     
     payout: (id: string) =>
       api.post<GenericResponse>(`/claims/${id}/payout`),
+
+    getSummary: () =>
+      api.get<any>("/claims/summary"),
+
+    approveClaim: (id: string) =>
+      api.post<any>(`/claims/${id}/approve`),
   },
 
   events: {
