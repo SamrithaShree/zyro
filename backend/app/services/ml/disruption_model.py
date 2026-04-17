@@ -30,3 +30,40 @@ def predict_disruption_probability(zone: str, trigger_types: List[str]) -> float
     final_prob = min(max(final_prob, 0.05), 0.6)
     
     return round(final_prob, 2)
+
+import os
+import joblib
+import numpy as np
+import scipy.stats as stats
+
+# Load Gaussian Process model
+try:
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "gp_model.pkl")
+    gp_model = joblib.load(MODEL_PATH)
+except Exception as e:
+    gp_model = None
+    print(f"Warning: Could not load gp_model.pkl: {e}")
+
+def compute_trigger_confidence(observed_value: float, threshold: float) -> float:
+    """
+    Computes the confidence that a trigger event has occurred, taking into 
+    account uncertainty in the measurement using a Gaussian Process Regressor.
+    """
+    if gp_model:
+        # We assume observed_value maps to some historical index for GP inference
+        # In a real pipeline, we'd pass spatial/temporal features. Here we mock X.
+        X_infer = np.array([[observed_value]])
+        
+        # Predict y and its standard deviation (uncertainty)
+        y_pred, y_std = gp_model.predict(X_infer, return_std=True)
+        
+        # Calculate the probability that the actual value exceeds the threshold
+        # using the CDF of the normal distribution N(y_pred, y_std)
+        prob_exceeds = 1.0 - stats.norm.cdf((threshold - y_pred[0]) / (y_std[0] + 1e-6))
+        
+        return round(float(prob_exceeds), 2)
+    else:
+        # Fallback to binary thresholding
+        if observed_value >= threshold:
+            return 0.95
+        return 0.05

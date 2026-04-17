@@ -1,6 +1,17 @@
+import os
+import joblib
+import numpy as np
+import shap
 from typing import Dict, Tuple
 
-# Hardcoded zone risk levels (0.0 to 1.0) for demo
+# Load the trained model dynamically
+try:
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "premium_model.pkl")
+    premium_model = joblib.load(MODEL_PATH)
+except Exception as e:
+    premium_model = None
+    print(f"Warning: Could not load premium_model.pkl: {e}")
+
 ZONE_RISK_MAPPING = {
     "Anna Nagar": 0.45,
     "T Nagar": 0.65,
@@ -12,54 +23,54 @@ ZONE_RISK_MAPPING = {
     "OMR": 0.50
 }
 
-PLATFORM_VOLATILITY = {
-    "Swiggy": 0.5,
-    "Zomato": 0.5,
-    "Uber": 0.6,
-    "Ola": 0.6,
-    "Dunzo": 0.4,
-    "Porter": 0.3
-}
-
 def compute_risk_score(worker_profile: dict, zone: str) -> Tuple[float, str, str]:
     """
-    Computes a normalized risk score (0.0 - 1.0) and returns (score, label, reasoning)
+    Computes a risk score and expected payout using an ML model.
     """
-    # 1. Base Zone Risk
-    base_risk = ZONE_RISK_MAPPING.get(zone, 0.5)
+    zone_risk = ZONE_RISK_MAPPING.get(zone, 0.5)
+    hours = int(worker_profile.get("working_hours_per_day", 8))
     
-    # 2. Working Hours Intensity (fatigue/exposure)
-    # Higher hours = higher exposure risk
-    hours = worker_profile.get("working_hours_per_day", 8)
-    hours_risk = min(hours / 12.0, 1.0) * 0.3 # Max 30% contribution
-    
-    # 3. Platform Volatility
-    platform = worker_profile.get("platform", "Generic")
-    p_risk = PLATFORM_VOLATILITY.get(platform, 0.5) * 0.2 # Max 20% contribution
-    
-    # 4. Income Band Volatility (Lower income bands often have more volatility)
-    income_band = worker_profile.get("income_band", "₹15k - ₹25k")
-    income_risk_map = {
-        "₹15k - ₹25k": 0.7,
-        "₹25k - ₹35k": 0.5,
-        "₹35k - ₹45k": 0.3,
-        "₹45k+": 0.2
-    }
-    i_risk = income_risk_map.get(income_band, 0.5) * 0.2 # Max 20% contribution
-    
-    # Composite Score (weighted)
-    final_score = (base_risk * 0.3) + hours_risk + p_risk + i_risk
-    final_score = min(max(final_score, 0.0), 1.0)
-    
-    # Determine Label
-    if final_score < 0.35:
-        label = "LOW"
-        reasoning = "Your risk profile is low due to stable zone patterns and balanced working hours."
-    elif final_score < 0.65:
-        label = "MEDIUM"
-        reasoning = "Moderate exposure detected based on your zone's disruption history and platform volatility."
-    else:
-        label = "HIGH"
-        reasoning = "High risk detected due to extreme disruption frequency in your zone and high exposure hours."
+    income_band_val = 3
+    income_band_str = worker_profile.get("income_band", "₹15k - ₹25k")
+    if "15k" in income_band_str: income_band_val = 2
+    elif "25k" in income_band_str: income_band_val = 3
+    elif "35k" in income_band_str: income_band_val = 4
+    elif "45k" in income_band_str: income_band_val = 5
+
+    if premium_model:
+        # Create feature vector matching training schema: [zone_risk, income_band_val, hours]
+        features = np.array([[zone_risk, income_band_val, hours]])
         
-    return round(final_score, 2), label, reasoning
+        # Inference
+        expected_payout = premium_model.predict(features)[0]
+        
+        # SHAP explainability (fast TreeExplainer for boosting model)
+        explainer = shap.TreeExplainer(premium_model)
+        shap_values = explainer.shap_values(features)[0]
+        
+        # Determine highest driving feature
+        feature_names = ["Zone Risk Patterns", "Income Band Group", "Working Hours Exposure"]
+        key_feature_idx = np.argmax(np.abs(shap_values))
+        key_feature = feature_names[key_feature_idx]
+        
+        # Normalize score bounds for system compatibility (0.0 - 1.0)
+        # Expected payout bounded mapping (roughly 20-150 relative space)
+        final_score = np.clip((expected_payout - 20) / 100.0, 0.0, 1.0)
+        
+        if final_score < 0.35:
+            label = "LOW"
+            base_reason = "Your risk profile is low."
+        elif final_score < 0.65:
+            label = "MEDIUM"
+            base_reason = "Moderate exposure detected."
+        else:
+            label = "HIGH"
+            base_reason = "High risk detected."
+            
+        reasoning = f"{base_reason} (ML Logic: The primary factor driving this assessment is your {key_feature}. SHAP Impact: {shap_values[key_feature_idx]:.2f})"
+        
+        return round(final_score, 2), label, reasoning
+    else:
+        # Fallback if model not found
+        final_score = zone_risk
+        return final_score, "UNKNOWN", "Fallback rule applied."
