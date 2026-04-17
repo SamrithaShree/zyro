@@ -7,6 +7,8 @@
 > Zyro is a Phase 1 hackathon concept and architecture submission for Guidewire DEVTrails 2026.
 > A working prototype is under active development. Sections labelled *Advanced / Production* are architecture-defined but not yet implemented.
 
+# Pitch Deck
+https://drive.google.com/drive/folders/1MY8lyRrnXdwyAMzQjQJIyh2lSnlvInm3?usp=sharing
 ---
 ## Quick Navigation
 
