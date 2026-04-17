@@ -10,6 +10,8 @@
 # Pitch Deck
 https://drive.google.com/drive/folders/1MY8lyRrnXdwyAMzQjQJIyh2lSnlvInm3?usp=sharing
 ---
+
+
 ## Quick Navigation
 
 - [Problem Context](#problem-context)
@@ -37,6 +39,67 @@ https://drive.google.com/drive/folders/1MY8lyRrnXdwyAMzQjQJIyh2lSnlvInm3?usp=sha
 - [Closing Summary](#closing-summary)
 
 ---
+## How to Run the Project
+
+Follow these steps to run Zyro locally.
+
+---
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-repository-link>
+cd zyro
+```
+
+---
+
+### 2. Start Backend (FastAPI)
+
+```bash
+cd backend
+python -m venv venv
+```
+
+Activate virtual environment:
+
+```bash
+venv\Scripts\activate      # Windows
+# source venv/bin/activate  # macOS/Linux
+```
+
+Install dependencies and run server:
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Backend runs at:  
+http://127.0.0.1:8000
+
+---
+
+### 3. Start Frontend (React)
+
+Open a new terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at:  
+http://localhost:5173
+
+---
+
+### 4. Open the Application
+
+Open your browser and go to:
+
+http://localhost:5173
 
 ## Problem Context
 
